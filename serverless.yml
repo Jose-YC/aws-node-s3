@@ -1,0 +1,294 @@
+# "org" ensures this Service is used with the correct Serverless Framework Access Key.
+org: joseycdev
+# "app" enables Serverless Framework Dashboard features and sharing them with other Services.
+app: aws-pizza
+# "service" is the name of this project. This will also be added to your AWS resource names.
+service: aws-pizza
+
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  stage: dev 
+  region: us-east-1 
+  environment:
+    REGION: ${self:provider.region}
+    BUCKET: bucket-serverless-github-challenge
+    SECRET_JWT: ${ssm/SECRET_JWT}
+  iam:
+    role: 
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:BatchGetItem
+            - dynamodb:ConditionCheckItem
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:GetItem
+          Resource:
+            - Fn::GetAtt: [RolTable, Arn]
+            - Fn::Join:
+                - ""
+                - [Fn::GetAtt: [RolTable, Arn], "/index/*"]
+        - Effect: Allow
+          Action:
+            - s3:PutObject
+            - s3:GetObject
+            - s3:DeleteObject
+          Resource: arn:aws:s3:::bucket-serverless-github-challenge/*
+
+
+# plugins:
+#   - serverless-dynamodb
+#   - serverless-offline
+
+
+package:
+  individually: true
+  patterns:
+    - "!*/**"
+
+
+custom:
+  dynamodb:
+    stages:
+      - dev
+    start:
+      port: 8000  # Puerto donde correrá DynamoDB Local
+      inMemory: true
+      heapInitial: 200m
+      heapMax: 1g
+      migrate: true
+      seed: true
+      convertEmptyValues: true
+  esbuild:
+    bundle: true
+    minify: true
+    sourcemap: true
+    target: 'node20'
+    format: 'esm'
+
+
+functions:
+  login:
+      handler: src/auth/lambda/handler.login
+      environment:
+        ROL_TABLE: { Ref: RolTable }
+      events:
+        - httpApi:
+            path: /auth/login
+            method: post
+  register:
+      handler: src/auth/lambda/handler.register
+      environment:
+        ROL_TABLE: { Ref: RolTable }
+      events:
+        - httpApi:
+            path: /auth/register
+            method: post
+  renew:
+      handler: src/auth/lambda/handler.renew
+      environment:
+        ROL_TABLE: { Ref: RolTable }
+      events:
+        - httpApi:
+            path: /auth/renew
+            method: get
+  rolcreate:
+    handler: src/rol/lambda/handler.create
+    environment:
+      ROL_TABLE: { Ref: RolTable }
+    events:
+      - httpApi:
+          path: /rol/create
+          method: post
+  rolget:
+    handler: src/rol/lambda/handler.get
+    environment:
+      ROL_TABLE: 
+        Ref: RolTable
+    events:
+      - httpApi:
+          path: /rol
+          method: get
+  rolgetbyid:
+    handler: src/rol/lambda/handler.getById
+    environment:
+      ROL_TABLE: 
+        Ref: RolTable
+    events:
+      - httpApi:
+          path: /rol/{name}
+          method: get
+  roldelete:
+    handler: src/rol/lambda/handler.elimination
+    environment:
+      ROL_TABLE: 
+        Ref: RolTable
+    events:
+      - httpApi:
+          path: /rol/delete/{name}
+          method: delete
+  usercreate:
+    handler: src/user/lambda/handler.create
+    environment:
+      ROL_TABLE: { Ref: RolTable }
+    events:
+      - httpApi:
+          path: /user/create
+          method: post
+  userget:
+    handler: src/user/lambda/handler.get
+    environment:
+      ROL_TABLE: 
+        Ref: RolTable
+    events:
+      - httpApi:
+          path: /user
+          method: get
+  usergetbyid:
+    handler: src/user/lambda/handler.getById
+    environment:
+      ROL_TABLE: 
+        Ref: RolTable
+    events:
+      - httpApi:
+          path: /user/{id}
+          method: get
+  userdelete:
+    handler: src/user/lambda/handler.elimination
+    environment:
+      ROL_TABLE: 
+        Ref: RolTable
+    events:
+      - httpApi:
+          path: /user/delete/{id}
+          method: delete
+  photourl:
+    handler: src/photo/lambda/handler.urlPhoto
+    environment:
+      ROL_TABLE: 
+        Ref: RolTable
+    events:
+      - httpApi:
+          path: /photo/url
+          method: get
+  photopost:
+    handler: src/photo/lambda/handler.create
+    environment:
+      ROL_TABLE: 
+        Ref: RolTable
+    events:
+      - s3:
+          bucket: bucket-serverless-github-challenge
+          event: s3:ObjectCreated:*
+          existing: true
+  photoget:
+    handler: src/photo/lambda/handler.get
+    environment:
+      ROL_TABLE: 
+        Ref: RolTable
+    events:
+      - httpApi:
+          path: /photo
+          method: get
+  photogetbyid:
+    handler: src/photo/lambda/handler.getById
+    environment:
+      ROL_TABLE: 
+        Ref: RolTable
+    events:
+      - httpApi:
+          path: /photo/{userid}
+          method: get
+  photodelete:
+    handler: src/photo/lambda/handler.elimination
+    environment:
+      ROL_TABLE: 
+        Ref: RolTable
+    events:
+      - httpApi:
+          path: /photo/delete/{userid}
+          method: delete
+
+
+resources:
+  Resources:
+    RolTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: Rol
+        AttributeDefinitions:
+          - AttributeName: pk
+            AttributeType: S
+          - AttributeName: sk
+            AttributeType: S
+          - AttributeName: gsi1pk
+            AttributeType: S
+          - AttributeName: gsi1sk
+            AttributeType: S
+          - AttributeName: gsi2pk
+            AttributeType: S
+          - AttributeName: gsi2sk
+            AttributeType: S
+        KeySchema:
+          - AttributeName: pk
+            KeyType: HASH
+          - AttributeName: sk
+            KeyType: RANGE
+        GlobalSecondaryIndexes:
+          - IndexName: GSI1
+            KeySchema:
+              - AttributeName: gsi1pk
+                KeyType: HASH
+              - AttributeName: gsi1sk
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
+          - IndexName: GSI2
+            KeySchema:
+              - AttributeName: gsi2pk
+                KeyType: HASH
+              - AttributeName: gsi2sk
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+    S3Bucket:
+      Type: 'AWS::S3::Bucket'
+      Properties:
+        BucketName: bucket-serverless-github-challenge
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          BlockPublicPolicy: false
+          IgnorePublicAcls: false
+          RestrictPublicBuckets: false
+    S3BucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket: 
+          Ref: S3Bucket
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal: '*'
+              Action: 's3:GetObject'
+              Resource:
+                Fn::Join:
+                  - ''
+                  - - 'arn:aws:s3:::'
+                    - Ref: S3Bucket
+                    - /*
+

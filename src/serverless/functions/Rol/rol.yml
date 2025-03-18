@@ -1,0 +1,58 @@
+
+rolcreate:
+  handler: src/rol/lambda/handler.create
+  events:
+    - httpApi:
+        path: /rol/create
+        method: post
+        request:
+          schemas: 
+            application/json: ${file(./src/rol/schema/rol.schema.json)}
+  environment:
+    ROL_TABLE: 
+      Ref: RolTable
+
+rolget:
+  handler: src/rol/lambda/handler.get
+  environment:
+    ROL_TABLE: 
+      Ref: RolTable
+  events:
+    - http:
+        path: /rol
+        method: get
+
+rolgetById:
+  handler: src/rol/lambda/handler.getById
+  environment:
+    ROL_TABLE: 
+      Ref: RolTable
+  events:
+    - http:
+        path: /rol/{id}
+        method: get
+        request:
+          parameters:
+            paths:
+              id: true
+
+rolupdate:
+  handler: src/rol/lambda/handler.update
+  environment:
+    ROL_TABLE: 
+      Ref: RolTable
+  events:
+    - http:
+        path: /rol/{id}
+        method: put
+        request:
+          parameters:
+            paths:
+              id: true
+  
+  # delete:
+  #   handler: src/rol/lambda/handler.delete
+  #   events:
+  #     - httpApi:
+  #         path: /rol/{id}
+  #         method: delete

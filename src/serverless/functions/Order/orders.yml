@@ -1,0 +1,45 @@
+orders:
+  create:
+    handler: src/order/lambda/lambda/handler.create
+    environment:
+      ORDERS_TABLE: 
+        Ref: OrdersTable
+      PENDING_ORDER:
+        Ref: PendingOrder
+    events:
+      - httpApi:
+          path: /order/create
+          method: post
+  
+  get:
+    handler: src/order/lambda/handler.get
+    events:
+      - httpApi:
+          path: /order
+          method: get
+  
+  getById:
+    handler: src/order/lambda/handler.getById
+    events:
+      - httpApi:
+          path: /order/{id}
+          method: get
+  
+  delete:
+    handler: src/order/lambda/handler.delete
+    events:
+      - httpApi:
+          path: /order/{id}
+          method: delete
+
+  prepare:
+    handler: src/order/lambda/handler.prepare
+    events:
+      - sqs:
+          arn:
+            Fn:GetAtt: [PendingOrder, Arn]
+          batchSize: 1
+
+  send:
+  l
+  

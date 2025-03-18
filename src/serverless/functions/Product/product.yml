@@ -1,0 +1,35 @@
+product:
+  create:
+    handler: src/product/lambda/handler.create
+    events:
+      - httpApi:
+          path: /product/create
+          method: post
+  
+  get:
+    handler: src/product/lambda/handler.get
+    events:
+      - httpApi:
+          path: /product
+          method: get
+  
+  getById:
+    handler: src/product/lambda/handler.getById
+    events:
+      - httpApi:
+          path: /product/{id}
+          method: get
+
+  update:
+    handler: src/product/lambda/handler.update
+    events:
+      - httpApi:
+          path: /product/{id}
+          method: put
+  
+  delete:
+    handler: src/product/lambda/handler.delete
+    events:
+      - httpApi:
+          path: /product/{id}
+          method: delete

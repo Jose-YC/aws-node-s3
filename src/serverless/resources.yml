@@ -1,0 +1,35 @@
+Resources:
+  PendingOrder:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: pendingOrder
+  SendOrder:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: sendOrder
+  OrdersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: Orders
+        AttributeDefinitions:
+          - AttributeName: orderId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: orderId
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+  RolTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: Rol
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1

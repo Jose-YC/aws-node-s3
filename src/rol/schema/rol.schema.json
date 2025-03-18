@@ -1,0 +1,18 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "title": "Rol",
+    "type": "object",
+    "required": ["name","description"],
+    "properties": {
+      "name": {
+        "type": "string",
+        "description": "The role name is missing."
+      },
+      "description": {
+        "type": "string",
+        "description": "The role description is missing."
+      }
+    }
+  }
+  
+  

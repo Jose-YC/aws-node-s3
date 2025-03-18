@@ -1,0 +1,35 @@
+user:
+  create:
+    handler: src/user/lambda/handler.create
+    events:
+      - httpApi:
+          path: /user/create
+          method: post
+  
+  get:
+    handler: src/user/lambda/handler.get
+    events:
+      - httpApi:
+          path: /user
+          method: get
+  
+  getById:
+    handler: src/user/lambda/handler.getById
+    events:
+      - httpApi:
+          path: /user/{id}
+          method: get
+
+  update:
+    handler: src/user/lambda/handler.update
+    events:
+      - httpApi:
+          path: /user/{id}
+          method: put
+  
+  delete:
+    handler: src/user/lambda/handler.delete
+    events:
+      - httpApi:
+          path: /user/{id}
+          method: delete
