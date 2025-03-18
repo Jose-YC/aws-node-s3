@@ -1,7 +1,8 @@
-import { Rol } from '../types/role.type';
+
 import { RolEntity } from '../entity/rol';
 import { dynamoDb, PutCommand, 
          GetCommand, QueryCommand, UpdateCommand } from '../../data/Dynamodb/dynamodb';
+import { CreateRolDtos } from '../dtos/create.rol.dtos';
 
 
 export class RolDatasources {
@@ -10,7 +11,7 @@ export class RolDatasources {
         private readonly tableName = process.env.ROL_TABLE,
     ){}
 
-    async post(rol: Rol): Promise<boolean> {
+    async post(rol: CreateRolDtos): Promise<boolean> {
         
         const params = {
             TableName: 'Rol',
@@ -22,7 +23,6 @@ export class RolDatasources {
                 gsi1sk: 'STATE#1',
 
                 id: rol.id,
-                description: rol.description,
                 name: rol.name,
                 state: 1,
                 _createdAt: new Date().toISOString(),
@@ -82,7 +82,7 @@ export class RolDatasources {
 
 
     
-    async put(id:string, name:string, rol:Rol): Promise<boolean> {
+    async put(id:string, name:string, ): Promise<boolean> {
         const params = {
             TableName: 'Rol',
             Key: { id },
@@ -92,7 +92,7 @@ export class RolDatasources {
                 '#name': 'name'
             },
             ExpressionAttributeValues: {
-                ':name': rol.name,
+                ':name': 'rol.name',
                 // ':updatedAt': timestamp
             },
             ConditionExpression: 'attribute_not_exists(pk)'

@@ -4,7 +4,6 @@ import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, PutCommand, 
          ScanCommand, GetCommand, QueryCommand,
          UpdateCommand } from "@aws-sdk/lib-dynamodb";
-import AWS from 'aws-sdk';
 
 const s3Client = new S3Client({});
 

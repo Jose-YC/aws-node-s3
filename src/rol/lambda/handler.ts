@@ -8,7 +8,7 @@ export const create = async (event: APIGatewayProxyEvent, context)=> {
 
   try {
 
-    await new RolDatasources().post({ id: ulid(), name: body.name, description:  body.description })
+    await new RolDatasources().post({ id: ulid(), name: body.name })
     return {
       statusCode: 200,
       body: JSON.stringify({

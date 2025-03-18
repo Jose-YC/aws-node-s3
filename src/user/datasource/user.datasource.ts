@@ -1,6 +1,6 @@
 import { dynamoDb, GetCommand, PutCommand, QueryCommand, UpdateCommand } from '../../data/Dynamodb/dynamodb';
+import { CreateUserDtos } from '../dtos/createUser.dtos';
 import { UserEntity } from '../entity/user';
-import { User } from '../types/user.type';
 
 
 export class UserDatasources {
@@ -9,7 +9,7 @@ export class UserDatasources {
         private readonly tableName = process.env.ROL_TABLE,
     ){}
 
-    async post(user: User): Promise<boolean> {
+    async post(user: CreateUserDtos): Promise<boolean> {
         const params = {
             TableName: 'Rol',
             Item: {
@@ -26,7 +26,7 @@ export class UserDatasources {
                 name: user.name,
                 email: user.email,
                 password: user.password,
-                rol: user.rol,
+                rol: user.rolName,
                 state: 1,
                 _createdAt: new Date().toISOString(),
                 _updateAt: new Date().toISOString()
@@ -85,7 +85,7 @@ export class UserDatasources {
     }
 
     
-    async put(id:string, user:User): Promise<boolean> {
+    async put(id:string): Promise<boolean> {
         return true
     }
 
