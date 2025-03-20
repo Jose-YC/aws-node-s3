@@ -1,6 +1,10 @@
 import { dynamoDb, GetCommand, PutCommand, QueryCommand, UpdateCommand } from '../../data/Dynamodb/dynamodb';
-import { CreateUserDtos } from '../dtos/createUser.dtos';
+
 import { UserEntity } from '../entity/user';
+import { CreateUserDtos } from '../dtos/create.user.dtos';
+import { UpdateUserDtos } from '../dtos/update.user.dtos';
+import { RolDatasources } from '../../rol/datasource/role.datasourse';
+import { bcryptjsAdapter } from '../../plugins/bcryptjs.adapter';
 
 
 export class UserDatasources {
@@ -10,6 +14,10 @@ export class UserDatasources {
     ){}
 
     async post(user: CreateUserDtos): Promise<boolean> {
+
+        await new RolDatasources().getById(user.rolName)
+
+        const password = bcryptjsAdapter.hash(user.password);
         const params = {
             TableName: 'Rol',
             Item: {
@@ -25,7 +33,7 @@ export class UserDatasources {
                 id: user.id,
                 name: user.name,
                 email: user.email,
-                password: user.password,
+                password,
                 rol: user.rolName,
                 state: 1,
                 _createdAt: new Date().toISOString(),
@@ -35,6 +43,7 @@ export class UserDatasources {
         };
 
         const respose = await dynamoDb.send(new PutCommand(params));
+        console.log(respose.$metadata.httpStatusCode);
         return !!respose
     
     }
@@ -52,7 +61,8 @@ export class UserDatasources {
             
         };
         const { Items, LastEvaluatedKey } = await dynamoDb.send(new QueryCommand(params));
-        return Items!.map(user => UserEntity.fromObject(user));
+        if (!Items) console.log("No exite el rol")
+            return Items!.map(user => UserEntity.fromObject(user));
     }
     async getById(id: string): Promise<UserEntity> {
         const params = {
@@ -81,12 +91,21 @@ export class UserDatasources {
             ConditionExpression: 'attribute_exists(pk)'
         };
         const response = await dynamoDb.send(new UpdateCommand(params));
+        console.log(response.$metadata.httpStatusCode);
         return !!response
     }
-
-    
-    async put(id:string): Promise<boolean> {
-        return true
+    async put(user: UpdateUserDtos): Promise<boolean> {
+        const params = {
+            TableName: 'Rol',
+            Key: { pk: 'ENTITY#USER', sk:`USER#${user.id}` },
+            UpdateExpression: user.expression,
+            ExpressionAttributeNames: user.attributeNames,
+            ExpressionAttributeValues: user.values,
+            ConditionExpression: 'attribute_exists(pk)'
+        };
+        const response = await dynamoDb.send(new UpdateCommand(params));
+        console.log(response.$metadata.httpStatusCode);
+        return !!response
     }
 
 }

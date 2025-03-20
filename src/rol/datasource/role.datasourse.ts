@@ -3,6 +3,8 @@ import { RolEntity } from '../entity/rol';
 import { dynamoDb, PutCommand, 
          GetCommand, QueryCommand, UpdateCommand } from '../../data/Dynamodb/dynamodb';
 import { CreateRolDtos } from '../dtos/create.rol.dtos';
+import { CustomError } from '../../handler/errors/custom.error';
+import { UpdateRolDtos } from '../dtos/update.rol.dtos';
 
 
 export class RolDatasources {
@@ -32,9 +34,11 @@ export class RolDatasources {
         };
 
         const role = await dynamoDb.send(new PutCommand(params));
+        if (role.$metadata.httpStatusCode !== 200) throw CustomError.badRequest('Error al ingresar el rol')
+
         return !!role
     }
-    async get(lim: number = 10, startkey?: string): Promise<RolEntity[]> {
+    async get(lim: number = 10, startkey?: string): Promise<{items: RolEntity[], lastKey?: string}> {
 
         const params = {
             TableName: 'Rol',
@@ -49,16 +53,21 @@ export class RolDatasources {
            
         };
         const { Items, LastEvaluatedKey } = await dynamoDb.send(new QueryCommand(params));
-        console.log(LastEvaluatedKey)
-        return Items!.map(rol => RolEntity.fromObject(rol));
+
+        return {
+            items: Items!.map(rol => RolEntity.fromObject(rol)),
+            lastKey: LastEvaluatedKey?.sk.replace('ROL#', '')
+        };
     }
     async getById(name:string): Promise<RolEntity> {
         const params = {
             TableName: 'Rol',
             Key: { pk: 'ENTITY#ROL', sk:`ROL#${name}` }
         };
-        const response = await dynamoDb.send(new GetCommand(params));
-        return RolEntity.fromObject(response.Item!);
+        const { Item } = await dynamoDb.send(new GetCommand(params));
+        if (!Item) throw CustomError.badRequest("No exite el rol");
+
+        return RolEntity.fromObject(Item!);
     }
     async delete(name:string): Promise<boolean> {
         const params = {
@@ -76,29 +85,22 @@ export class RolDatasources {
             ConditionExpression: 'attribute_exists(pk)'
         };
         const response = await dynamoDb.send(new UpdateCommand(params));
+        if (response.$metadata.httpStatusCode !== 200) throw CustomError.badRequest('Error al eliminar el rol')
         
         return !!response
     }
-
-
-    
-    async put(id:string, name:string, ): Promise<boolean> {
+    async put(rol: UpdateRolDtos ): Promise<boolean> {
         const params = {
             TableName: 'Rol',
-            Key: { id },
+            Key: { pk: 'ENTITY#ROL', sk:`ROL#${rol.name}` },
             // UpdateExpression: 'SET #name = :name, updatedAt = :updatedAt',
-            UpdateExpression: 'SET #name = :name',
-            ExpressionAttributeNames: {
-                '#name': 'name'
-            },
-            ExpressionAttributeValues: {
-                ':name': 'rol.name',
-                // ':updatedAt': timestamp
-            },
+            UpdateExpression: rol.expression,
+            ExpressionAttributeNames: rol.attributeNames,
+            ExpressionAttributeValues: rol.values,
             ConditionExpression: 'attribute_not_exists(pk)'
         };
         const response = await dynamoDb.send(new UpdateCommand(params));
-        console.log(response);
+        if (response.$metadata.httpStatusCode !== 200) throw CustomError.badRequest('Error al modificar el rol')
 
         return !!response
     }

@@ -11,7 +11,11 @@ provider:
   name: aws
   runtime: nodejs20.x
   stage: dev 
-  region: us-east-1 
+  region: us-east-1
+  logs:
+    restApi: true
+  apiGateway:
+    shouldStartNameWithService: true
   environment:
     REGION: ${self:provider.region}
     BUCKET: bucket-serverless-github-challenge
@@ -40,17 +44,14 @@ provider:
             - s3:DeleteObject
           Resource: arn:aws:s3:::bucket-serverless-github-challenge/*
 
-
 # plugins:
 #   - serverless-dynamodb
 #   - serverless-offline
-
 
 package:
   individually: true
   patterns:
     - "!*/**"
-
 
 custom:
   dynamodb:
@@ -70,15 +71,22 @@ custom:
     sourcemap: true
     target: 'node20'
     format: 'esm'
-
+  cors:
+    origin: '*'
+    headers:
+      - Content-Type
+      - Authorization
+    allowCredentials: false
 
 functions:
+  authorize:
+    handler: src/authoraizer/handler.authorize
   login:
       handler: src/auth/lambda/handler.login
       environment:
         ROL_TABLE: { Ref: RolTable }
       events:
-        - httpApi:
+        - http:
             path: /auth/login
             method: post
   register:
@@ -86,7 +94,7 @@ functions:
       environment:
         ROL_TABLE: { Ref: RolTable }
       events:
-        - httpApi:
+        - http:
             path: /auth/register
             method: post
   renew:
@@ -94,7 +102,7 @@ functions:
       environment:
         ROL_TABLE: { Ref: RolTable }
       events:
-        - httpApi:
+        - http:
             path: /auth/renew
             method: get
   rolcreate:
@@ -102,7 +110,7 @@ functions:
     environment:
       ROL_TABLE: { Ref: RolTable }
     events:
-      - httpApi:
+      - http:
           path: /rol/create
           method: post
   rolget:
@@ -111,7 +119,7 @@ functions:
       ROL_TABLE: 
         Ref: RolTable
     events:
-      - httpApi:
+      - http:
           path: /rol
           method: get
   rolgetbyid:
@@ -120,7 +128,7 @@ functions:
       ROL_TABLE: 
         Ref: RolTable
     events:
-      - httpApi:
+      - http:
           path: /rol/{name}
           method: get
   roldelete:
@@ -129,7 +137,7 @@ functions:
       ROL_TABLE: 
         Ref: RolTable
     events:
-      - httpApi:
+      - http:
           path: /rol/delete/{name}
           method: delete
   usercreate:
@@ -137,7 +145,7 @@ functions:
     environment:
       ROL_TABLE: { Ref: RolTable }
     events:
-      - httpApi:
+      - http:
           path: /user/create
           method: post
   userget:
@@ -146,8 +154,11 @@ functions:
       ROL_TABLE: 
         Ref: RolTable
     events:
-      - httpApi:
+      - http:
           path: /user
+          authorizer:
+            name: authorize
+            resultTtlInSeconds: 15
           method: get
   usergetbyid:
     handler: src/user/lambda/handler.getById
@@ -155,7 +166,7 @@ functions:
       ROL_TABLE: 
         Ref: RolTable
     events:
-      - httpApi:
+      - http:
           path: /user/{id}
           method: get
   userdelete:
@@ -164,7 +175,7 @@ functions:
       ROL_TABLE: 
         Ref: RolTable
     events:
-      - httpApi:
+      - http:
           path: /user/delete/{id}
           method: delete
   photourl:
@@ -173,7 +184,7 @@ functions:
       ROL_TABLE: 
         Ref: RolTable
     events:
-      - httpApi:
+      - http:
           path: /photo/url
           method: get
   photopost:
@@ -192,7 +203,7 @@ functions:
       ROL_TABLE: 
         Ref: RolTable
     events:
-      - httpApi:
+      - http:
           path: /photo
           method: get
   photogetbyid:
@@ -201,7 +212,7 @@ functions:
       ROL_TABLE: 
         Ref: RolTable
     events:
-      - httpApi:
+      - http:
           path: /photo/{userid}
           method: get
   photodelete:
@@ -210,10 +221,9 @@ functions:
       ROL_TABLE: 
         Ref: RolTable
     events:
-      - httpApi:
+      - http:
           path: /photo/delete/{userid}
           method: delete
-
 
 resources:
   Resources:
@@ -291,4 +301,3 @@ resources:
                   - - 'arn:aws:s3:::'
                     - Ref: S3Bucket
                     - /*
-

@@ -8,7 +8,7 @@ export const create = async (event: APIGatewayProxyEvent, context)=> {
 
   try {
 
-    await new UserDatasources().post({ id: ulid(), name: body.name, password:  body.password, email:  body.email, rol:  body.rol })
+    await new UserDatasources().post({ id: ulid(), name: body.name, password:  body.password, email:  body.email, rolName:  body.rol })
     return {
       statusCode: 200,
       body: JSON.stringify({
@@ -31,6 +31,8 @@ export const create = async (event: APIGatewayProxyEvent, context)=> {
 };
 export const get = async (event: APIGatewayProxyEvent) => {
   const { lim = 5 , startkey } = event.queryStringParameters!;
+  
+  console.log("COOSTOM AUTHORAIZER",event.requestContext);
 
   try {
 
