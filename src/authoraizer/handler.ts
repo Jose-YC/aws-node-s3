@@ -5,62 +5,24 @@ import { generatePolicy } from '../handler/error.handler';
 
 
 export const authorize = async (event: APIGatewayTokenAuthorizerEvent): Promise<APIGatewayAuthorizerResult >=> {
+
   const xtoken = event.authorizationToken;
-  if (!xtoken) return generatePolicy(
-    'unauthorized',
-    'Deny', 
-    event.methodArn, 
-    { 
-      contex: { Status: false }, 
-      statusCode: 401, 
-      message: 'Token no valido' 
-    }
-  );
+  if (!xtoken) return generatePolicy('unauthorized','Deny', event.methodArn);
   
-  const token = xtoken.startsWith('Bearer ') 
-    ? event.authorizationToken.slice(7) 
-    : event.authorizationToken;
-    
+  const token = xtoken.startsWith('Bearer ') ? xtoken.slice(7) : xtoken;
+  
   try {
     const payload = await jwtAdapter.validatetetJWT<{id:string}>(token);
-    if (!payload) return generatePolicy(
-      'unauthorized',
-      'Deny', 
-      event.methodArn, 
-      { 
-        contex: { Status: false }, 
-        statusCode: 401, 
-        message: 'Error de Token' 
-      }
-    );
+    if (!payload) return generatePolicy('unauthorized','Deny', event.methodArn);
     
     const user = await new UserDatasources().getById(payload.id);
-    if (!user) return generatePolicy(
-      'unauthorized',
-      'Deny', 
-      event.methodArn, 
-      { 
-        contex: { Status: false }, 
-        statusCode: 401, 
-        message: 'Error de Token' 
-      }
-    );
-
+    if (!user) return generatePolicy('unauthorized', 'Deny',  event.methodArn);
     
-    return generatePolicy(user.id,'Allow', event.methodArn, { user });
+    return generatePolicy(user.id,'Allow', event.methodArn, { name: user.name, id: user.id, email: user.email, rol: user.rol });
 
   } catch (error) {
     console.log(error);
-    return generatePolicy(
-      'unauthorized',
-      'Deny', 
-      event.methodArn, 
-      { 
-        contex: { Status: false }, 
-        statusCode: 500, 
-        message: 'INTERNAL_SERVER_ERROR' 
-      }
-    );
+    return generatePolicy('unauthorized', 'Deny', event.methodArn);
   }
 
 };

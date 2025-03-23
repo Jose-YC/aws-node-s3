@@ -1,4 +1,3 @@
-import { ulid } from 'ulid';
 import { APIGatewayProxyEvent } from 'aws-lambda';
 import { RolDatasources } from '../datasource/role.datasourse';
 import { formatErrorResponse } from '../../handler/error.handler';
@@ -11,7 +10,7 @@ export const create = async (event: APIGatewayProxyEvent, context)=> {
 
   try {
 
-    await new RolDatasources().post({ id: ulid(), name: body.name })
+    await new RolDatasources().post({ name: body.name, description: body.description })
     return {
       headers: {'Content-Type': 'application/json'},
       statusCode: 200,
@@ -68,7 +67,9 @@ export const getById = async (event: APIGatewayProxyEvent) => {
 };
 export const update = async (event: APIGatewayProxyEvent) => {
   const { name } = event.pathParameters!;
-  const [error, updateDto] = UpdateRolDtos.create({ name });
+  const body = JSON.parse(event.body!);
+
+  const [error, updateDto] = UpdateRolDtos.create({ name, description: body.description});
   if (error) return formatErrorResponse( CustomError.badRequest(error))
 
   try {
@@ -77,8 +78,7 @@ export const update = async (event: APIGatewayProxyEvent) => {
       headers: {'Content-Type': 'application/json'},
       statusCode: 200,
       body: JSON.stringify({
-        Status: true,
-        role
+        Status: true
       }),
     };    
 

@@ -1,7 +1,9 @@
-import { Photo } from '../types/photo.type';
 import { dynamoDb, PutCommand, GetCommand, 
          QueryCommand, UpdateCommand, PutObjectCommand, 
          getSignedUrl, s3Client} from '../../data/Dynamodb/dynamodb';
+import { CustomError } from '../../handler/errors/custom.error';
+import { CreatePhotoDtos } from '../dtos/create.photo.dtos';
+import { PhotoEntity } from '../entity/photo';
 
 export class PhotoDatasources {
 
@@ -16,19 +18,22 @@ export class PhotoDatasources {
         });
 
         const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+        if (!uploadUrl) throw CustomError.badRequest("Carga de archivo fallida");
 
         return uploadUrl    
     }
-   
-    async post(photo: Photo): Promise<boolean> {
+    async post(photo: CreatePhotoDtos): Promise<boolean> {
         const params = {
             TableName: 'Rol',
             Item: {
                 pk: `USER#${photo.userid}`,
                 sk: `PHOTO#${photo.id}`,
 
-                gsi1pk: 'ENTITY#PHOTO',
+                gsi1pk: `PHOTO#USER#${photo.userid}`,
                 gsi1sk: 'STATE#1',
+
+                gsi2pk: `ENTITY#PHOTO`,
+                gsi2sk: 'STATE#1',
 
                 id: photo.id,
                 url: photo.url,
@@ -44,62 +49,87 @@ export class PhotoDatasources {
 
         return !!respose
     }
-
-    async getById(photoid: string, userid:string) {
+    async getById(photoid: string, userid:string): Promise<PhotoEntity> {
         const params = {
             TableName: 'Rol',
             Key: { pk: `USER#${userid}`, sk: `PHOTO#${photoid}` }
         };
-        const response = await dynamoDb.send(new GetCommand(params));
-        return response;
+        const { Item } = await dynamoDb.send(new GetCommand(params));
+        if (!Item) throw CustomError.badRequest("No exite la imagen");
+
+        return PhotoEntity.fromObject(Item!);
     }
     async delete(photoid:string, userid: string): Promise<boolean> {
         const params = {
             TableName: 'Rol',
             Key: { pk: `USER#${userid}`, sk:`PHOTO#${photoid}` },
-            UpdateExpression: 'SET #gsi1sk = :newStateIndex, #state = :newState',
+            UpdateExpression: 'SET #gsi1sk = :newStateIndex, #gsi2pk= :newStateIndex2, #state = :newState',
             ExpressionAttributeNames: {
                 '#gsi1sk': 'gsi1sk',
+                '#gsi2pk': 'gsi2pk',
                 '#state': 'state'
             },
             ExpressionAttributeValues: {
-            ':newStateIndex': 'STATE#0',  // 0 para inactivo, 1 para activo
-            ':newState': 0  // 0 para inactivo, 1 para activo
+                ':newStateIndex': 'STATE#0',  // 0 para inactivo, 1 para activo
+                ':newStateIndex2': 'STATE#0',  // 0 para inactivo, 1 para activo
+                ':newState': 0  // 0 para inactivo, 1 para activo
             },
-            ConditionExpression: 'attribute_exists(pk)'
+            ConditionExpression: 'attribute_exists(pk) AND attribute_exists(sk)'
         };
         const response = await dynamoDb.send(new UpdateCommand(params));
+        if (response.$metadata.httpStatusCode !== 200) throw CustomError.badRequest('Error al eliminar la imagen');
         
         return !!response
     }
-    
-
-    async get( userid: string, lim: number, startkey?: string) {
+    async getId( userid: string, lim: number, startkey?: string): Promise<{items: PhotoEntity[], startkey?: string}> {
         const params = {
             TableName: 'Rol',
             IndexName: 'GSI1',
             KeyConditionExpression: 'gsi1pk = :pk AND begins_with(gsi1sk, :statePrefix)',
             ExpressionAttributeValues: {
-                ':pk': 'ENTITY#PHOTO',
+                ':pk': `PHOTO#USER#${userid}`,
                 ':statePrefix': 'STATE#1'
             },
             Limit: lim,
-            ...(startkey ? {ExclusiveStartKey: { pk: `USER#${userid}`, sk: `PHOTO#${startkey}`, gsi1sk: 'STATE#1', gsi1pk: 'ENTITY#PHOTO'}} : {})
-           
+            ...(startkey ? {ExclusiveStartKey: { pk: `USER#${userid}`, sk: `PHOTO#${startkey}`, gsi1sk: 'STATE#1', gsi1pk: `PHOTO#USER#${userid}`}} : {})
         };
 
         const { Items, LastEvaluatedKey } = await dynamoDb.send(new QueryCommand(params));
-        console.log(LastEvaluatedKey);
-        console.log(Items);
 
-        return LastEvaluatedKey
+        return {
+            items: Items!.map(photo => PhotoEntity.fromObject(photo)),
+            startkey: LastEvaluatedKey ? LastEvaluatedKey.sk.replace('PHOTO#', '') : null
+        };
     }
+    async getAll( lim: number, startkey?: string): Promise<{items: PhotoEntity[], startkey?: string}>{
+        let nextPageToken;
 
-    
-    async search(lim: number, userid: string, search: string, startkey?: string) {
-       
-    }
-    async put(id:string, product:Photo): Promise<boolean> {
-        return true
+        const params = {
+            TableName: 'Rol',
+            IndexName: 'GSI2',
+            KeyConditionExpression: 'gsi2pk = :pk AND begins_with(gsi2sk, :state)',
+            ExpressionAttributeValues: {
+                ':pk': 'ENTITY#PHOTO',
+                ':state': 'STATE#1'
+            },
+            Limit: lim,
+            ...(startkey ? {
+                ExclusiveStartKey: { 
+                    pk: `USER#${startkey.split('-')[0]}`, 
+                    sk: `PHOTO#${startkey.split('-')[1]}`, 
+                    gsi2sk: 'STATE#1', 
+                    gsi2pk: 'ENTITY#PHOTO'
+                }
+            } : {})
+
+        };
+
+        const { Items, LastEvaluatedKey } = await dynamoDb.send(new QueryCommand(params));
+        if (LastEvaluatedKey) nextPageToken = `${LastEvaluatedKey.pk.replace('USER#', '')}-${ LastEvaluatedKey.sk.replace('PHOTO#', '')}`;
+        
+        return {
+                    items: Items!.map(photo => PhotoEntity.fromObject(photo)),
+                    startkey: nextPageToken
+                };
     }
 }

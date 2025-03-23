@@ -31,8 +31,6 @@ export const create = async (event: APIGatewayProxyEvent, context)=> {
 };
 export const get = async (event: APIGatewayProxyEvent) => {
   const { lim = 5 , startkey } = event.queryStringParameters!;
-  
-  console.log("COOSTOM AUTHORAIZER",event.requestContext);
 
   try {
 

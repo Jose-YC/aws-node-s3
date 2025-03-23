@@ -1,9 +1,9 @@
 # "org" ensures this Service is used with the correct Serverless Framework Access Key.
 org: joseycdev
 # "app" enables Serverless Framework Dashboard features and sharing them with other Services.
-app: aws-pizza
+app: aws-node-s3
 # "service" is the name of this project. This will also be added to your AWS resource names.
-service: aws-pizza
+service: aws-node-s3
 
 useDotenv: true
 
@@ -111,6 +111,9 @@ functions:
       ROL_TABLE: { Ref: RolTable }
     events:
       - http:
+          authorizer:
+            name: authorize
+            resultTtlInSeconds: 15
           path: /rol/create
           method: post
   rolget:
@@ -120,6 +123,9 @@ functions:
         Ref: RolTable
     events:
       - http:
+          authorizer:
+            name: authorize
+            resultTtlInSeconds: 15
           path: /rol
           method: get
   rolgetbyid:
@@ -129,8 +135,23 @@ functions:
         Ref: RolTable
     events:
       - http:
+          authorizer:
+            name: authorize
+            resultTtlInSeconds: 15
           path: /rol/{name}
           method: get
+  rolupdate:
+    handler: src/rol/lambda/handler.update
+    environment:
+      ROL_TABLE: 
+        Ref: RolTable
+    events:
+      - http:
+          authorizer:
+            name: authorize
+            resultTtlInSeconds: 15
+          path: /rol/update/{name}
+          method: put
   roldelete:
     handler: src/rol/lambda/handler.elimination
     environment:
@@ -138,6 +159,9 @@ functions:
         Ref: RolTable
     events:
       - http:
+          authorizer:
+            name: authorize
+            resultTtlInSeconds: 15
           path: /rol/delete/{name}
           method: delete
   usercreate:
@@ -146,6 +170,9 @@ functions:
       ROL_TABLE: { Ref: RolTable }
     events:
       - http:
+          authorizer:
+            name: authorize
+            resultTtlInSeconds: 15
           path: /user/create
           method: post
   userget:
@@ -167,6 +194,9 @@ functions:
         Ref: RolTable
     events:
       - http:
+          authorizer:
+            name: authorize
+            resultTtlInSeconds: 15
           path: /user/{id}
           method: get
   userdelete:
@@ -176,6 +206,9 @@ functions:
         Ref: RolTable
     events:
       - http:
+          authorizer:
+            name: authorize
+            resultTtlInSeconds: 15
           path: /user/delete/{id}
           method: delete
   photourl:
@@ -185,6 +218,9 @@ functions:
         Ref: RolTable
     events:
       - http:
+          authorizer:
+            name: authorize
+            resultTtlInSeconds: 15
           path: /photo/url
           method: get
   photopost:
@@ -198,13 +234,28 @@ functions:
           event: s3:ObjectCreated:*
           existing: true
   photoget:
-    handler: src/photo/lambda/handler.get
+    handler: src/photo/lambda/handler.getId
     environment:
       ROL_TABLE: 
         Ref: RolTable
     events:
       - http:
+          authorizer:
+            name: authorize
+            resultTtlInSeconds: 15
           path: /photo
+          method: get
+  photogetall:
+    handler: src/photo/lambda/handler.getAll
+    environment:
+      ROL_TABLE: 
+        Ref: RolTable
+    events:
+      - http:
+          authorizer:
+            name: authorize
+            resultTtlInSeconds: 15
+          path: /photo/all
           method: get
   photogetbyid:
     handler: src/photo/lambda/handler.getById
@@ -213,7 +264,10 @@ functions:
         Ref: RolTable
     events:
       - http:
-          path: /photo/{userid}
+          authorizer:
+            name: authorize
+            resultTtlInSeconds: 15
+          path: /photo/{photoid}
           method: get
   photodelete:
     handler: src/photo/lambda/handler.elimination
@@ -222,6 +276,9 @@ functions:
         Ref: RolTable
     events:
       - http:
+          authorizer:
+            name: authorize
+            resultTtlInSeconds: 15
           path: /photo/delete/{userid}
           method: delete
 

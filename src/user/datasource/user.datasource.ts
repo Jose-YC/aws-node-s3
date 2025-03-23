@@ -5,6 +5,7 @@ import { CreateUserDtos } from '../dtos/create.user.dtos';
 import { UpdateUserDtos } from '../dtos/update.user.dtos';
 import { RolDatasources } from '../../rol/datasource/role.datasourse';
 import { bcryptjsAdapter } from '../../plugins/bcryptjs.adapter';
+import { CustomError } from '../../handler/errors/custom.error';
 
 
 export class UserDatasources {
@@ -43,11 +44,13 @@ export class UserDatasources {
         };
 
         const respose = await dynamoDb.send(new PutCommand(params));
-        console.log(respose.$metadata.httpStatusCode);
+        if (respose.$metadata.httpStatusCode !== 200) throw CustomError.badRequest('Error al ingresar el usuario');
+        
         return !!respose
     
     }
-    async get(lim: number = 10, startkey?: string): Promise<UserEntity[]> {
+    async get(lim: number = 10, startkey?: string): Promise<{items: UserEntity[], startkey?: string}> {
+
         const params = {
             TableName: 'Rol',
             IndexName: 'GSI1',
@@ -61,8 +64,11 @@ export class UserDatasources {
             
         };
         const { Items, LastEvaluatedKey } = await dynamoDb.send(new QueryCommand(params));
-        if (!Items) console.log("No exite el rol")
-            return Items!.map(user => UserEntity.fromObject(user));
+
+        return {
+            items: Items!.map(user => UserEntity.fromObject(user)),
+            startkey: LastEvaluatedKey?.sk.replace('ROL#', '')
+        };
     }
     async getById(id: string): Promise<UserEntity> {
         const params = {
@@ -70,10 +76,13 @@ export class UserDatasources {
             Key: { pk: 'ENTITY#USER', sk:`USER#${id}` }
         };
         const { Item } = await dynamoDb.send(new GetCommand(params));
+        if (!Item) throw CustomError.badRequest("No exite el usuario");
+
         return UserEntity.fromObject(Item!);
         
     }
     async delete(id:string): Promise<boolean> {
+        this.getById(id);
          const params = {
             TableName: 'Rol',
             Key: { pk: 'ENTITY#USER', sk:`USER#${id}` },
@@ -88,10 +97,11 @@ export class UserDatasources {
             ':newStateIndex2': 'STATE#0',  // 0 para inactivo, 1 para activo
             ':newState': 0  // 0 para inactivo, 1 para activo
             },
-            ConditionExpression: 'attribute_exists(pk)'
+            ConditionExpression: 'attribute_exists(pk) AND attribute_exists(sk)'
         };
         const response = await dynamoDb.send(new UpdateCommand(params));
-        console.log(response.$metadata.httpStatusCode);
+        if (response.$metadata.httpStatusCode !== 200) throw CustomError.badRequest('Error al eliminar el rol');
+
         return !!response
     }
     async put(user: UpdateUserDtos): Promise<boolean> {
@@ -101,10 +111,11 @@ export class UserDatasources {
             UpdateExpression: user.expression,
             ExpressionAttributeNames: user.attributeNames,
             ExpressionAttributeValues: user.values,
-            ConditionExpression: 'attribute_exists(pk)'
+            ConditionExpression: 'attribute_exists(pk) AND attribute_exists(sk)'
         };
         const response = await dynamoDb.send(new UpdateCommand(params));
-        console.log(response.$metadata.httpStatusCode);
+        if (response.$metadata.httpStatusCode !== 200) throw CustomError.badRequest('Error al modificar el usuario');
+
         return !!response
     }
 

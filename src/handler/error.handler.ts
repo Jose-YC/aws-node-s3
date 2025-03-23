@@ -1,6 +1,6 @@
 
 import { APIGatewayAuthorizerResult, APIGatewayProxyResult } from "aws-lambda";
-import { AuthorizerContext, HttpStatusCode } from "../Enum/enum";
+import { HttpStatusCode } from "../Enum/enum";
 import { CustomError } from "./errors/custom.error";
 
 export const formatErrorResponse = (err: Error): APIGatewayProxyResult => {
@@ -35,7 +35,7 @@ export const formatErrorResponse = (err: Error): APIGatewayProxyResult => {
 };
 
 
-export const generatePolicy = (principalId: string, effect: 'Allow' | 'Deny', resource: string, context: AuthorizerContext = {}): APIGatewayAuthorizerResult => {
+export const generatePolicy = (principalId: string, effect: 'Allow' | 'Deny', resource: string, context = {}): APIGatewayAuthorizerResult => {
     return {
         principalId: principalId || 'userid',
         policyDocument: {

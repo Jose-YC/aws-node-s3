@@ -1,8 +1,4 @@
-export interface AuthorizerContext {
-    [key: string]: any;
-    statusCode?: number;
-    message?: string;
-}
+
 
 export enum HttpStatusCode {
     CONTINUE = 100,

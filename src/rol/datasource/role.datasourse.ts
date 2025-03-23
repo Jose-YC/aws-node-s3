@@ -24,13 +24,13 @@ export class RolDatasources {
                 gsi1pk: 'ENTITY#ROL',
                 gsi1sk: 'STATE#1',
 
-                id: rol.id,
                 name: rol.name,
+                description: rol.description,
                 state: 1,
                 _createdAt: new Date().toISOString(),
                 _updateAt: new Date().toISOString()
             },
-            ConditionExpression: 'attribute_not_exists(pk)'
+            ConditionExpression: 'attribute_not_exists(pk) AND attribute_not_exists(sk)'
         };
 
         const role = await dynamoDb.send(new PutCommand(params));
@@ -38,7 +38,7 @@ export class RolDatasources {
 
         return !!role
     }
-    async get(lim: number = 10, startkey?: string): Promise<{items: RolEntity[], lastKey?: string}> {
+    async get(lim: number = 10, startkey?: string): Promise<{items: RolEntity[], startkey?: string}> {
 
         const params = {
             TableName: 'Rol',
@@ -56,7 +56,7 @@ export class RolDatasources {
 
         return {
             items: Items!.map(rol => RolEntity.fromObject(rol)),
-            lastKey: LastEvaluatedKey?.sk.replace('ROL#', '')
+            startkey: LastEvaluatedKey?.sk.replace('ROL#', '')
         };
     }
     async getById(name:string): Promise<RolEntity> {
@@ -70,6 +70,7 @@ export class RolDatasources {
         return RolEntity.fromObject(Item!);
     }
     async delete(name:string): Promise<boolean> {
+        this.getById(name);
         const params = {
             TableName: 'Rol',
             Key: { pk: 'ENTITY#ROL', sk:`ROL#${name}` },
@@ -82,10 +83,10 @@ export class RolDatasources {
             ':newStateIndex': 'STATE#0',  // 0 para inactivo, 1 para activo
             ':newState': 0  // 0 para inactivo, 1 para activo
             },
-            ConditionExpression: 'attribute_exists(pk)'
+            ConditionExpression: 'attribute_exists(pk) AND attribute_exists(sk)'
         };
         const response = await dynamoDb.send(new UpdateCommand(params));
-        if (response.$metadata.httpStatusCode !== 200) throw CustomError.badRequest('Error al eliminar el rol')
+        if (response.$metadata.httpStatusCode !== 200) throw CustomError.badRequest('Error al eliminar el rol');
         
         return !!response
     }
@@ -93,14 +94,13 @@ export class RolDatasources {
         const params = {
             TableName: 'Rol',
             Key: { pk: 'ENTITY#ROL', sk:`ROL#${rol.name}` },
-            // UpdateExpression: 'SET #name = :name, updatedAt = :updatedAt',
             UpdateExpression: rol.expression,
             ExpressionAttributeNames: rol.attributeNames,
             ExpressionAttributeValues: rol.values,
-            ConditionExpression: 'attribute_not_exists(pk)'
+            ConditionExpression: 'attribute_exists(pk) AND attribute_exists(sk)'
         };
         const response = await dynamoDb.send(new UpdateCommand(params));
-        if (response.$metadata.httpStatusCode !== 200) throw CustomError.badRequest('Error al modificar el rol')
+        if (response.$metadata.httpStatusCode !== 200) throw CustomError.badRequest('Error al modificar el rol');
 
         return !!response
     }
