@@ -118,3 +118,25 @@ export const elimination = async (event: APIGatewayProxyEvent) => {
   }
   
 };
+
+export const transform = async (event: APIGatewayProxyEvent) => {
+  const body = JSON.parse(event.body!);
+  const { photoid } = event.pathParameters!;
+  const { id } = event.requestContext.authorizer!;
+
+  try {
+        const image = await new PhotoDatasources().transform(photoid!, id, body.transform)
+    
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        image
+      }),
+    };    
+    
+  } catch (error) {
+    console.log(error)
+    return formatErrorResponse(error);   
+  }
+  
+};

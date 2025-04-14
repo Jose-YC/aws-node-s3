@@ -81,8 +81,12 @@ custom:
 functions:
   authorize:
     handler: src/authoraizer/handler.authorize
+    layers:
+        - { Ref: DependeciesPhoto }
   login:
       handler: src/auth/lambda/handler.login
+      layers:
+      - { Ref: DependeciesPhoto }
       environment:
         ROL_TABLE: { Ref: RolTable }
       events:
@@ -91,6 +95,8 @@ functions:
             method: post
   register:
       handler: src/auth/lambda/handler.register
+      layers:
+      - { Ref: DependeciesPhoto }
       environment:
         ROL_TABLE: { Ref: RolTable }
       events:
@@ -99,6 +105,8 @@ functions:
             method: post
   renew:
       handler: src/auth/lambda/handler.renew
+      layers:
+      - { Ref: DependeciesPhoto }
       environment:
         ROL_TABLE: { Ref: RolTable }
       events:
@@ -166,6 +174,8 @@ functions:
           method: delete
   usercreate:
     handler: src/user/lambda/handler.create
+    layers:
+      - { Ref: DependeciesPhoto }
     environment:
       ROL_TABLE: { Ref: RolTable }
     events:
@@ -213,6 +223,8 @@ functions:
           method: delete
   photourl:
     handler: src/photo/lambda/handler.urlPhoto
+    layers:
+      - { Ref: DependeciesPhoto }
     environment:
       ROL_TABLE: 
         Ref: RolTable
@@ -225,6 +237,8 @@ functions:
           method: get
   photopost:
     handler: src/photo/lambda/handler.create
+    layers:
+      - { Ref: DependeciesPhoto }
     environment:
       ROL_TABLE: 
         Ref: RolTable
@@ -235,6 +249,8 @@ functions:
           existing: true
   photoget:
     handler: src/photo/lambda/handler.getId
+    layers:
+      - { Ref: DependeciesPhoto }
     environment:
       ROL_TABLE: 
         Ref: RolTable
@@ -247,6 +263,8 @@ functions:
           method: get
   photogetall:
     handler: src/photo/lambda/handler.getAll
+    layers:
+      - { Ref: DependeciesPhoto }
     environment:
       ROL_TABLE: 
         Ref: RolTable
@@ -259,6 +277,8 @@ functions:
           method: get
   photogetbyid:
     handler: src/photo/lambda/handler.getById
+    layers:
+      - { Ref: DependeciesPhoto }
     environment:
       ROL_TABLE: 
         Ref: RolTable
@@ -271,6 +291,8 @@ functions:
           method: get
   photodelete:
     handler: src/photo/lambda/handler.elimination
+    layers:
+      - { Ref: DependeciesPhoto }
     environment:
       ROL_TABLE: 
         Ref: RolTable
@@ -281,6 +303,30 @@ functions:
             resultTtlInSeconds: 15
           path: /photo/delete/{userid}
           method: delete
+  phototransform:
+    handler: src/photo/lambda/handler.transform
+    layers:
+      - { Ref: DependeciesPhoto }
+    environment:
+      ROL_TABLE: 
+        Ref: RolTable
+    events:
+      - http:
+          authorizer:
+            name: authorize
+            resultTtlInSeconds: 15
+          path: /photo/transform/{photoid}
+          method: post
+
+layers:
+  base: 
+    path: "dependecies-aws"
+    name: "DependeciesPhoto"
+    description: "Dependecies for photo"
+    compatibleRuntimes:
+      - "nodejs20.x"
+    package:
+      artifact: nodejs.zip
 
 resources:
   Resources:

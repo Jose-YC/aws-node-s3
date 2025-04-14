@@ -1,9 +1,13 @@
+import { Readable } from 'stream';
 import { dynamoDb, PutCommand, GetCommand, 
          QueryCommand, UpdateCommand, PutObjectCommand, 
-         getSignedUrl, s3Client} from '../../data/Dynamodb/dynamodb';
+         getSignedUrl, s3Client,
+         GetObjectCommand} from '../../data/Dynamodb/dynamodb';
 import { CustomError } from '../../handler/errors/custom.error';
 import { CreatePhotoDtos } from '../dtos/create.photo.dtos';
 import { PhotoEntity } from '../entity/photo';
+import { streamToBuffer } from '../handler/buffer.photo';
+import { PhotoTransformer } from '../handler/transformations.handler';
 
 export class PhotoDatasources {
 
@@ -131,5 +135,26 @@ export class PhotoDatasources {
                     items: Items!.map(photo => PhotoEntity.fromObject(photo)),
                     startkey: nextPageToken
                 };
+    }
+    async transform( photoid:string, userid: string, options ){
+        const params = {
+            Bucket: 'bucket-serverless-github-challenge',
+            Key: `${userid}/${photoid}`
+        };
+
+        const response = await s3Client.send(new GetObjectCommand(params));
+
+        console.log("ACA LA RESPUESTA DEL BUCKET: ", response);
+
+        if (!response.Body) throw CustomError.badRequest("No se pudo obtener la imagen");
+        
+        const buffer = await streamToBuffer(response.Body as Readable);
+        console.log("ACA LA RESPUESTA DEL BUFFER: ", buffer);
+
+        const imagebuffer = (await new PhotoTransformer(buffer).applyAll(options)).getBuffer();
+        console.log("ACA LA RESPUESTA DE LA CLASE QUE TRANSFORMA: ", imagebuffer);
+
+  
+        return imagebuffer
     }
 }
