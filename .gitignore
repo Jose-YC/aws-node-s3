@@ -1,6 +1,7 @@
 undefined
 node_modules
 nodejs
+
 nodejs.*
 .serverless
 .dynamodb

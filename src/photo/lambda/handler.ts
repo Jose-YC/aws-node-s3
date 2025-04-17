@@ -125,13 +125,13 @@ export const transform = async (event: APIGatewayProxyEvent) => {
   const { id } = event.requestContext.authorizer!;
 
   try {
-        const image = await new PhotoDatasources().transform(photoid!, id, body.transform)
-    
+        const image:Buffer = await new PhotoDatasources().transform(photoid!, id, body.transform)
+
     return {
       statusCode: 200,
       body: JSON.stringify({
-        image
-      }),
+        imageUrl: `data:image/jpeg;base64,${image.toString('base64')}`
+      })
     };    
     
   } catch (error) {

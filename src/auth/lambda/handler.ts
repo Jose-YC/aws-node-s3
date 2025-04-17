@@ -11,6 +11,9 @@ export const login = async (event: APIGatewayProxyEvent, context)=> {
    const {user, token} = await new AuthDatasources().login({ email: body.email, password:  body.password })
     return {
       statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
         Status: true,
         user,

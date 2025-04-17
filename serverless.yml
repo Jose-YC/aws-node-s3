@@ -50,6 +50,10 @@ provider:
 
 package:
   individually: true
+  exclude:
+    - node_modules/**
+    - nodejs/**
+    - nodejs.zip
   patterns:
     - "!*/**"
 
@@ -82,11 +86,11 @@ functions:
   authorize:
     handler: src/authoraizer/handler.authorize
     layers:
-        - { Ref: DependeciesPhoto }
+        - { Ref: BaseLambdaLayer }
   login:
       handler: src/auth/lambda/handler.login
       layers:
-      - { Ref: DependeciesPhoto }
+      - { Ref: BaseLambdaLayer }
       environment:
         ROL_TABLE: { Ref: RolTable }
       events:
@@ -96,7 +100,7 @@ functions:
   register:
       handler: src/auth/lambda/handler.register
       layers:
-      - { Ref: DependeciesPhoto }
+      - { Ref: BaseLambdaLayer }
       environment:
         ROL_TABLE: { Ref: RolTable }
       events:
@@ -106,7 +110,7 @@ functions:
   renew:
       handler: src/auth/lambda/handler.renew
       layers:
-      - { Ref: DependeciesPhoto }
+      - { Ref: BaseLambdaLayer }
       environment:
         ROL_TABLE: { Ref: RolTable }
       events:
@@ -175,7 +179,7 @@ functions:
   usercreate:
     handler: src/user/lambda/handler.create
     layers:
-      - { Ref: DependeciesPhoto }
+      - { Ref: BaseLambdaLayer }
     environment:
       ROL_TABLE: { Ref: RolTable }
     events:
@@ -224,7 +228,7 @@ functions:
   photourl:
     handler: src/photo/lambda/handler.urlPhoto
     layers:
-      - { Ref: DependeciesPhoto }
+      - { Ref: BaseLambdaLayer }
     environment:
       ROL_TABLE: 
         Ref: RolTable
@@ -238,7 +242,7 @@ functions:
   photopost:
     handler: src/photo/lambda/handler.create
     layers:
-      - { Ref: DependeciesPhoto }
+      - { Ref: BaseLambdaLayer }
     environment:
       ROL_TABLE: 
         Ref: RolTable
@@ -250,7 +254,7 @@ functions:
   photoget:
     handler: src/photo/lambda/handler.getId
     layers:
-      - { Ref: DependeciesPhoto }
+      - { Ref: BaseLambdaLayer }
     environment:
       ROL_TABLE: 
         Ref: RolTable
@@ -264,7 +268,7 @@ functions:
   photogetall:
     handler: src/photo/lambda/handler.getAll
     layers:
-      - { Ref: DependeciesPhoto }
+      - { Ref: BaseLambdaLayer }
     environment:
       ROL_TABLE: 
         Ref: RolTable
@@ -278,7 +282,7 @@ functions:
   photogetbyid:
     handler: src/photo/lambda/handler.getById
     layers:
-      - { Ref: DependeciesPhoto }
+      - { Ref: BaseLambdaLayer }
     environment:
       ROL_TABLE: 
         Ref: RolTable
@@ -292,7 +296,7 @@ functions:
   photodelete:
     handler: src/photo/lambda/handler.elimination
     layers:
-      - { Ref: DependeciesPhoto }
+      - { Ref: BaseLambdaLayer }
     environment:
       ROL_TABLE: 
         Ref: RolTable
@@ -306,7 +310,7 @@ functions:
   phototransform:
     handler: src/photo/lambda/handler.transform
     layers:
-      - { Ref: DependeciesPhoto }
+      - { Ref: BaseLambdaLayer }
     environment:
       ROL_TABLE: 
         Ref: RolTable
@@ -321,10 +325,12 @@ functions:
 layers:
   base: 
     path: "dependecies-aws"
-    name: "DependeciesPhoto"
+    name: "BaseLambdaLayer"
     description: "Dependecies for photo"
     compatibleRuntimes:
       - "nodejs20.x"
+    compatibleArchitectures:
+      - "x86_64"
     package:
       artifact: nodejs.zip
 
