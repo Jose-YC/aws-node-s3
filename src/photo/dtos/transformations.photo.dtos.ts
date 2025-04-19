@@ -1,4 +1,4 @@
-import { CropPhotoDtos } from "./crop.photo.dtos";
+
 import { FiltersPhotoDtos } from "./filters.photo.dtos";
 import { NormalisePhotoDtos } from "./normalise.photo.dtos";
 import { ResizePhotoDtos } from "./resize.photo.dtos";
@@ -6,8 +6,9 @@ import { ResizePhotoDtos } from "./resize.photo.dtos";
 export class TransformationsPhotoDtos {
 
     private constructor(
+        public readonly photoid:string,
+        public readonly userid:string,
         public readonly resize?:ResizePhotoDtos,
-        public readonly crop?:CropPhotoDtos,
         public readonly rotate?:number,
         public readonly median?:number,
         public readonly blur?:number,
@@ -18,37 +19,35 @@ export class TransformationsPhotoDtos {
         public readonly normalise?:NormalisePhotoDtos,
     ){}
 
-    // get order(){
-    //     const returnObj: {[key:string]: any} = {}
-    //     if (this.crop) returnObj.crop = this.crop;
-    //     if (this.rotate) returnObj.rotate = this.rotate;
-    //     if (this.flip) returnObj.flip = this.flip;
-    //     if (this.flop) returnObj.flop = this.flop;
-    //     if (this.resize) returnObj.resize = this.resize;
-    //     if (this.blur) returnObj.blur = this.blur;
-    //     if (this.normalise) returnObj.normalise = this.normalise;
-    //     if (this.filters) returnObj.filters = this.filters;
-    //     if (this.median) returnObj.median = this.median;
-    //     if (this.format) returnObj.format = this.format;
-    //     return returnObj;
-    // }
 
-    static create(props: {[key:string]:any}): TransformationsPhotoDtos{
-        const { resize, crop, rotate, median, blur, 
-                flip, flop, format, filters, normalise } = props;
-
-        const resizeDto =  ResizePhotoDtos.fromObject(resize);
-        const cropDto =  CropPhotoDtos.fromObject(crop);
+    static create(props: {[key:string]:any}): [string?, TransformationsPhotoDtos?]{
+        const { photoid, userid, resize, rotate, median, blur, 
+                flip, flop, format, filters, 
+                normalise } = props;
+        let flipbool = flip, flopbool = flop;
+        
+        if (!photoid) return ['Missing photo id'];
+        if (!userid) return ['Missing user id'];
+        if (rotate && isNaN(Number(rotate))) return ['Missing rotate'];
+        if (median && isNaN(Number(median))) return ['Missing median'];
+        if (blur && isNaN(Number(blur))) return ['Missing blur'];
+        if (flip && typeof flip !== 'boolean') flipbool = (flip === 'true');
+        if (flop && typeof flop !== 'boolean') flopbool = (flop === 'true');
+        
+        const [err, resizeDto] =  ResizePhotoDtos.fromObject(resize);
+        if (err) return [err];
+        const [errnorm, normaliseDtos] =  NormalisePhotoDtos.fromObject(normalise);
+        if (errnorm) return [errnorm];
         const filtersDto =  FiltersPhotoDtos.fromObject(filters);
-        const normaliseDtos =  NormalisePhotoDtos.fromObject(normalise);
 
-        console.log("AQUI VA TODAS LAS ENTIDADES PARA TRANSFORMAR: ", resizeDto, cropDto, filtersDto, normaliseDtos);
-
-        return  new TransformationsPhotoDtos(
-                resizeDto, cropDto, rotate, median, 
-                blur, flip, flop, format, filtersDto, 
+        return  [
+            undefined, 
+            new TransformationsPhotoDtos(
+                photoid, userid, resizeDto, rotate, median, 
+                blur, flipbool, flopbool, format, filtersDto, 
                 normaliseDtos
             )
+        ]
         
     }
 }

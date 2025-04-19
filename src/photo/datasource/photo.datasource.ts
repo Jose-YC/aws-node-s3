@@ -8,6 +8,7 @@ import { CreatePhotoDtos } from '../dtos/create.photo.dtos';
 import { PhotoEntity } from '../entity/photo';
 import { streamToBuffer } from '../handler/buffer.photo';
 import { PhotoTransformer } from '../handler/transformations.handler';
+import { TransformationsPhotoDtos } from '../dtos/transformations.photo.dtos';
 
 export class PhotoDatasources {
 
@@ -136,23 +137,20 @@ export class PhotoDatasources {
                     startkey: nextPageToken
                 };
     }
-    async transform( photoid:string, userid: string, options ){
+    async transform( photo: TransformationsPhotoDtos ): Promise<Buffer<ArrayBufferLike>>{
         const params = {
             Bucket: 'bucket-serverless-github-challenge',
-            Key: `${userid}/${photoid}`
+            Key: `${photo.userid}/${photo.photoid}`
         };
 
         const response = await s3Client.send(new GetObjectCommand(params));
-
-        console.log("ACA LA RESPUESTA DEL BUCKET: ", response);
-
-        if (!response.Body) throw CustomError.badRequest("No se pudo obtener la imagen");
+        if (response.$metadata.httpStatusCode !== 200) throw CustomError.badRequest("No se pudo obtener la imagen");
         
         const buffer = await streamToBuffer(response.Body as Readable);
-        console.log("ACA LA RESPUESTA DEL BUFFER: ", buffer);
+        if (!buffer) throw CustomError.badRequest("No se pudo obtener la imagen");
 
-        const imagebuffer = (await new PhotoTransformer(buffer).applyAll(options)).getBuffer();
-        console.log("ACA LA RESPUESTA DE LA CLASE QUE TRANSFORMA: ", imagebuffer);
+        const imagebuffer = (await new PhotoTransformer(buffer).applyAll(photo)).getBuffer();
+        if (!imagebuffer) throw CustomError.badRequest("No se pudo obtener la imagen");
 
   
         return imagebuffer

@@ -1,4 +1,5 @@
 import sharp from "sharp";
+import { TransformationsPhotoDtos } from "../dtos/transformations.photo.dtos";
 
 export class PhotoTransformer {
     private image: sharp.Sharp;
@@ -53,7 +54,7 @@ export class PhotoTransformer {
       return this; 
     }
 
-    async applyAll( alltransfor ): Promise<this> {
+    async applyAll( alltransfor: TransformationsPhotoDtos ): Promise<this> {
       if (!alltransfor) return this;
 
       await this.applyTransformations(alltransfor);

@@ -5,9 +5,11 @@ export class NormalisePhotoDtos {
         public readonly upper?:number
     ){}
 
-    static fromObject(props: {[key:string]:any}): NormalisePhotoDtos{
+    static fromObject(props: {[key:string]:any}): [string?, NormalisePhotoDtos?]{
         const { lower, upper } = props;
+        if (lower && isNaN(Number(lower))) return ['Missing lower'];
+        if (upper && isNaN(Number(upper))) return ['Missing upper'];
 
-        return new NormalisePhotoDtos(lower, upper);
+        return [ undefined, new NormalisePhotoDtos(lower, upper)];
     }
 }

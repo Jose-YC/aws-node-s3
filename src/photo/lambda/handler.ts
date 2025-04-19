@@ -2,6 +2,8 @@ import { ulid } from 'ulid';
 import { APIGatewayProxyEvent, S3Event } from 'aws-lambda';
 import { PhotoDatasources } from '../datasource/photo.datasource';
 import { formatErrorResponse } from '../../handler/error.handler';
+import { TransformationsPhotoDtos } from '../dtos/transformations.photo.dtos';
+import { CustomError } from '../../handler/errors/custom.error';
 
 export const urlPhoto = async (event: APIGatewayProxyEvent, context)=> {
   const { id } = event.requestContext.authorizer!;
@@ -118,14 +120,15 @@ export const elimination = async (event: APIGatewayProxyEvent) => {
   }
   
 };
-
 export const transform = async (event: APIGatewayProxyEvent) => {
   const body = JSON.parse(event.body!);
   const { photoid } = event.pathParameters!;
   const { id } = event.requestContext.authorizer!;
+  const [err, transform] = TransformationsPhotoDtos.create({photoid, userid: id, ...body.transform});
+  if (err) return formatErrorResponse(CustomError.badRequest(err));
 
   try {
-        const image:Buffer = await new PhotoDatasources().transform(photoid!, id, body.transform)
+        const image = await new PhotoDatasources().transform(transform!)
 
     return {
       statusCode: 200,
