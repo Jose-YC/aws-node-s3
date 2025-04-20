@@ -1,6 +1,9 @@
 import { ulid } from 'ulid';
 import { APIGatewayProxyEvent } from 'aws-lambda';
 import { UserDatasources } from '../datasource/user.datasource';
+import { PaginateDtos } from '../../DTO/paginate.dtos';
+import { formatErrorResponse } from '../../handler/error.handler';
+import { CustomError } from '../../handler/errors/custom.error';
 
 export const create = async (event: APIGatewayProxyEvent, context)=> {
 
@@ -31,10 +34,14 @@ export const create = async (event: APIGatewayProxyEvent, context)=> {
 };
 export const get = async (event: APIGatewayProxyEvent) => {
   const { lim = 5 , startkey } = event.queryStringParameters!;
+      const [err, paginate] = PaginateDtos.create({lim, startkey});
+      if (err) return formatErrorResponse(CustomError.badRequest(err));
+
 
   try {
 
-    const users = await new UserDatasources().get(+lim, startkey)
+    const users = await new UserDatasources().get(paginate!);
+
     return {
       statusCode: 200,
       body: JSON.stringify({
@@ -57,6 +64,7 @@ export const get = async (event: APIGatewayProxyEvent) => {
 };
 export const getById = async (event: APIGatewayProxyEvent) => {
   const { id } = event.pathParameters!;
+  if (!id) return formatErrorResponse(CustomError.badRequest("El id es requerido"));
 
   try {
 
@@ -83,6 +91,7 @@ export const getById = async (event: APIGatewayProxyEvent) => {
 };
 export const elimination = async (event: APIGatewayProxyEvent) => {
   const { id } = event.pathParameters!;
+  if (!id) return formatErrorResponse(CustomError.badRequest("El id es requerido"));
   try {
     
     await new UserDatasources().delete(id!)
@@ -106,7 +115,6 @@ export const elimination = async (event: APIGatewayProxyEvent) => {
   }
   
 };
-
 
 export const update = async (event: APIGatewayProxyEvent) => {
   const { name } = event.pathParameters!;

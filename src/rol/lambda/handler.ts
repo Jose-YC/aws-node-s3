@@ -3,14 +3,15 @@ import { RolDatasources } from '../datasource/role.datasourse';
 import { formatErrorResponse } from '../../handler/error.handler';
 import { UpdateRolDtos } from '../dtos/update.rol.dtos';
 import { CustomError } from '../../handler/errors/custom.error';
+import { PaginateDtos } from '../../DTO/paginate.dtos';
 
 export const create = async (event: APIGatewayProxyEvent, context)=> {
 
-  const body = JSON.parse(event.body!);
+  const { name, description } = JSON.parse(event.body!);
 
   try {
 
-    await new RolDatasources().post({ name: body.name, description: body.description })
+    await new RolDatasources().post({ name, description })
     return {
       headers: {'Content-Type': 'application/json'},
       statusCode: 200,
@@ -27,10 +28,13 @@ export const create = async (event: APIGatewayProxyEvent, context)=> {
 };
 export const get = async (event: APIGatewayProxyEvent) => {
   const { lim = 5 , startkey } = event.queryStringParameters!;
+    const [err, paginate] = PaginateDtos.create({lim, startkey});
+    if (err) return formatErrorResponse(CustomError.badRequest(err));
 
   try {
 
-    const role = await new RolDatasources().get(+lim, startkey)
+    const role = await new RolDatasources().get(paginate!);
+
     return {
       headers: {'Content-Type': 'application/json'},
       statusCode: 200,
@@ -47,8 +51,9 @@ export const get = async (event: APIGatewayProxyEvent) => {
 };
 export const getById = async (event: APIGatewayProxyEvent) => {
   const { name } = event.pathParameters!;
-
-  try {
+  if (!name) return formatErrorResponse(CustomError.badRequest("El name es requerido"))
+  
+    try {
 
     const role = await new RolDatasources().getById(name!)
     return {
@@ -67,13 +72,16 @@ export const getById = async (event: APIGatewayProxyEvent) => {
 };
 export const update = async (event: APIGatewayProxyEvent) => {
   const { name } = event.pathParameters!;
-  const body = JSON.parse(event.body!);
+  if (!name) return formatErrorResponse(CustomError.badRequest("El name es requerido"));
+  const { description } = JSON.parse(event.body!);
+  if (!description) return formatErrorResponse(CustomError.badRequest("La description es requerida"));
 
-  const [error, updateDto] = UpdateRolDtos.create({ name, description: body.description});
-  if (error) return formatErrorResponse( CustomError.badRequest(error))
+  const [error, updateDto] = UpdateRolDtos.create({ name, description});
+  if (error) return formatErrorResponse( CustomError.badRequest(error));
 
   try {
-    const role = await new RolDatasources().put(updateDto!)
+    
+    await new RolDatasources().put(updateDto!);
     return {
       headers: {'Content-Type': 'application/json'},
       statusCode: 200,
@@ -89,6 +97,9 @@ export const update = async (event: APIGatewayProxyEvent) => {
 };
 export const elimination = async (event) => {
   const { name } = event.pathParameters!;
+  if (!name) return formatErrorResponse(CustomError.badRequest("El name es requerido"));
+
+
   try {
 
     const role = await new RolDatasources().delete(name)

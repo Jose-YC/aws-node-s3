@@ -1,6 +1,8 @@
 import { ulid } from 'ulid';
 import { APIGatewayProxyEvent } from 'aws-lambda';
 import { AuthDatasources } from '../datasource/auth.datasourse';
+import { formatErrorResponse } from '../../handler/error.handler';
+import { CustomError } from '../../handler/errors/custom.error';
 
 export const login = async (event: APIGatewayProxyEvent, context)=> {
 
@@ -62,10 +64,12 @@ export const register = async (event: APIGatewayProxyEvent) => {
   }
 };
 export const renew = async (event: APIGatewayProxyEvent) => {
+  const { id:userid } = event.requestContext.authorizer!;
+  if(!userid) return formatErrorResponse(CustomError.badRequest('El id es requerido'));
 
   try {
 
-    const token = await new AuthDatasources().renew('token provar')
+    const token = await new AuthDatasources().renew(userid)
     return {
       statusCode: 200,
       body: JSON.stringify({

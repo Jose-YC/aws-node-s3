@@ -2,14 +2,18 @@ import { ulid } from 'ulid';
 import { APIGatewayProxyEvent, S3Event } from 'aws-lambda';
 import { PhotoDatasources } from '../datasource/photo.datasource';
 import { formatErrorResponse } from '../../handler/error.handler';
-import { TransformationsPhotoDtos } from '../dtos/transformations.photo.dtos';
 import { CustomError } from '../../handler/errors/custom.error';
+import { PhotoDtos } from '../dtos/update.phoo.dtos';
+import { PhotoIdDtos } from '../dtos/id.photo.dtos';
+import { PaginateDtos } from '../../DTO/paginate.dtos';
 
 export const urlPhoto = async (event: APIGatewayProxyEvent, context)=> {
-  const { id } = event.requestContext.authorizer!;
+  const { id:userid } = event.requestContext.authorizer!;
+  const [err, ids] = PhotoIdDtos.create({photoid:ulid(), userid});
+  if (err) return formatErrorResponse(CustomError.badRequest(err));
   try {
 
-     const url = await new PhotoDatasources().url(id, ulid(), 'Image')
+     const url = await new PhotoDatasources().url(ids!);
     return {
       statusCode: 200,
       body: JSON.stringify({
@@ -39,10 +43,12 @@ export const create = async (event: S3Event)=> {
 export const getId = async (event: APIGatewayProxyEvent) => {
   const { lim = 5 , startkey } = event.queryStringParameters!;
   const { id } = event.requestContext.authorizer!;
+  const [err, paginate] = PaginateDtos.create({lim, startkey, id});
+  if (err) return formatErrorResponse(CustomError.badRequest(err));
 
   try {
 
-    const photos = await new PhotoDatasources().getId(id, +lim, startkey);
+    const photos = await new PhotoDatasources().getId(paginate!);
 
     return {
       statusCode: 200,
@@ -59,10 +65,12 @@ export const getId = async (event: APIGatewayProxyEvent) => {
 };
 export const getAll = async (event: APIGatewayProxyEvent) => {
   const { lim = 5 , startkey } = event.queryStringParameters!;
+  const [err, paginate] = PaginateDtos.create({lim, startkey});
+  if (err) return formatErrorResponse(CustomError.badRequest(err));
 
   try {
 
-    const photos = await new PhotoDatasources().getAll(+lim, startkey);
+    const photos = await new PhotoDatasources().getAll(paginate!);
 
     return {
       statusCode: 200,
@@ -80,11 +88,12 @@ export const getAll = async (event: APIGatewayProxyEvent) => {
 export const getById = async (event: APIGatewayProxyEvent) => {
   const body = JSON.parse(event.body!);
   const { photoid } = event.pathParameters!;
-  const { id } = event.requestContext.authorizer!;
-
+  const { id:userid } = event.requestContext.authorizer!;
+  const [err, ids] = PhotoIdDtos.create({photoid, userid});
+  if (err) return formatErrorResponse(CustomError.badRequest(err));
   try {
 
-    const photo = await new PhotoDatasources().getById(photoid!, id)
+    const photo = await new PhotoDatasources().getById(ids!)
    
     return {
       statusCode: 200,
@@ -102,10 +111,11 @@ export const getById = async (event: APIGatewayProxyEvent) => {
 };
 export const elimination = async (event: APIGatewayProxyEvent) => {
   const { photoid } = event.pathParameters!;
-  const { id } = event.requestContext.authorizer!;
-
+  const { id:userid } = event.requestContext.authorizer!;
+  const [err, ids] = PhotoIdDtos.create({photoid, userid});
+  if (err) return formatErrorResponse(CustomError.badRequest(err));
   try {
-        const Status = await new PhotoDatasources().delete(photoid!, id)
+        const Status = await new PhotoDatasources().delete(ids!)
     
     return {
       statusCode: 200,
@@ -124,11 +134,11 @@ export const transform = async (event: APIGatewayProxyEvent) => {
   const body = JSON.parse(event.body!);
   const { photoid } = event.pathParameters!;
   const { id } = event.requestContext.authorizer!;
-  const [err, transform] = TransformationsPhotoDtos.create({photoid, userid: id, ...body.transform});
+  const [err, transformations] = PhotoDtos.create({photoid, userid: id, ...body.transformations});
   if (err) return formatErrorResponse(CustomError.badRequest(err));
 
   try {
-        const image = await new PhotoDatasources().transform(transform!)
+        const image = await new PhotoDatasources().transform(transformations!)
 
     return {
       statusCode: 200,

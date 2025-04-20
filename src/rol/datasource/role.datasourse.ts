@@ -5,6 +5,7 @@ import { dynamoDb, PutCommand,
 import { CreateRolDtos } from '../dtos/create.rol.dtos';
 import { CustomError } from '../../handler/errors/custom.error';
 import { UpdateRolDtos } from '../dtos/update.rol.dtos';
+import { PaginateDtos } from '../../DTO/paginate.dtos';
 
 
 export class RolDatasources {
@@ -38,7 +39,7 @@ export class RolDatasources {
 
         return !!role
     }
-    async get(lim: number = 10, startkey?: string): Promise<{items: RolEntity[], startkey?: string}> {
+    async get(paginate: PaginateDtos): Promise<{items: RolEntity[], startkey?: string}> {
 
         const params = {
             TableName: 'Rol',
@@ -48,8 +49,8 @@ export class RolDatasources {
                 ':pk': 'ENTITY#ROL',
                 ':statePrefix': 'STATE#1'
             },
-            Limit: lim,
-            ...(startkey ? {ExclusiveStartKey: { pk: 'ENTITY#ROL', sk: `ROL#${startkey}`, gsi1sk: 'STATE#1', gsi1pk: 'ENTITY#ROL'}} : {})
+            Limit: paginate.lim,
+            ...(paginate.startkey ? {ExclusiveStartKey: { pk: 'ENTITY#ROL', sk: `ROL#${paginate.startkey}`, gsi1sk: 'STATE#1', gsi1pk: 'ENTITY#ROL'}} : {})
            
         };
         const { Items, LastEvaluatedKey } = await dynamoDb.send(new QueryCommand(params));

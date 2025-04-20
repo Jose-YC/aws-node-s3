@@ -5,6 +5,8 @@ import { bcryptjsAdapter } from '../../plugins/bcryptjs.adapter';
 import { RegisterDtos } from '../dtos/register.dtos';
 
 import { dynamoDb, PutCommand, QueryCommand } from '../../data/Dynamodb/dynamodb';
+import { CustomError } from '../../handler/errors/custom.error';
+import { RolDatasources } from '../../rol/datasource/role.datasourse';
 
 
 export class AuthDatasources {
@@ -38,6 +40,9 @@ export class AuthDatasources {
           return AuthEntityDtos.fromObject({user: Items![0], token});
     }
     async register(register:RegisterDtos): Promise<AuthEntityDtos> {
+
+        await new RolDatasources().getById('user')
+
         const params = { 
             TableName: 'Rol',
             IndexName: 'GSI2', // Nombre del índice secundario global
@@ -50,7 +55,7 @@ export class AuthDatasources {
           };
 
         const { Items } = await dynamoDb.send(new QueryCommand(params));
-        if (Items) console.log('El usuario ya existe'); 
+        if (Items) CustomError.badRequest('El usuario ya existe'); 
 
         const password = bcryptjsAdapter.hash(register.password);
         const paramsCreateUser = {
@@ -78,16 +83,15 @@ export class AuthDatasources {
         };
 
         const respose = await dynamoDb.send(new PutCommand(paramsCreateUser));
-        if (respose.$metadata.httpStatusCode !== 200) console.log('No se pudo guardar el usuario');
+        if (respose.$metadata.httpStatusCode !== 200) CustomError.badRequest('No se pudo guardar el usuario');
 
         const token = await jwtAdapter.generatetJWT<string>({id: register.id});
-        if (!token) console.log('Error al crear token');
 
         return AuthEntityDtos.fromObject({user: register, token});
     }
     async renew(id:string): Promise<String> {
         const token = await jwtAdapter.generatetJWT<string>({id});
-        if (!token) return 'fallo la creacion de jwt';
-        return token;
+        if (!token) CustomError.badRequest( 'fallo la creacion de jwt');
+        return token!;
     }
 }

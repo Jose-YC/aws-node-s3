@@ -6,6 +6,7 @@ import { UpdateUserDtos } from '../dtos/update.user.dtos';
 import { RolDatasources } from '../../rol/datasource/role.datasourse';
 import { bcryptjsAdapter } from '../../plugins/bcryptjs.adapter';
 import { CustomError } from '../../handler/errors/custom.error';
+import { PaginateDtos } from '../../DTO/paginate.dtos';
 
 
 export class UserDatasources {
@@ -49,7 +50,7 @@ export class UserDatasources {
         return !!respose
     
     }
-    async get(lim: number = 10, startkey?: string): Promise<{items: UserEntity[], startkey?: string}> {
+    async get(paginate: PaginateDtos): Promise<{items: UserEntity[], startkey?: string}> {
 
         const params = {
             TableName: 'Rol',
@@ -59,8 +60,8 @@ export class UserDatasources {
                 ':pk': 'ENTITY#USER',
                 ':statePrefix': 'STATE#1'
             },
-            Limit: lim,
-            ...(startkey ? {ExclusiveStartKey: { pk: 'ENTITY#USER', sk: `USER#${startkey}`, gsi1sk: 'STATE#1', gsi1pk: 'ENTITY#USER'}} : {})
+            Limit: paginate.lim,
+            ...(paginate.startkey ? {ExclusiveStartKey: { pk: 'ENTITY#USER', sk: `USER#${paginate.startkey}`, gsi1sk: 'STATE#1', gsi1pk: 'ENTITY#USER'}} : {})
             
         };
         const { Items, LastEvaluatedKey } = await dynamoDb.send(new QueryCommand(params));

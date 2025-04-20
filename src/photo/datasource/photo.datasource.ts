@@ -8,18 +8,19 @@ import { CreatePhotoDtos } from '../dtos/create.photo.dtos';
 import { PhotoEntity } from '../entity/photo';
 import { streamToBuffer } from '../handler/buffer.photo';
 import { PhotoTransformer } from '../handler/transformations.handler';
-import { TransformationsPhotoDtos } from '../dtos/transformations.photo.dtos';
+import { PhotoDtos } from '../dtos/update.phoo.dtos';
+import { PaginateDtos } from '../../DTO/paginate.dtos';
+import { PhotoIdDtos } from '../dtos/id.photo.dtos';
 
 export class PhotoDatasources {
 
-    async url(userid:string, photoid:string, contentType:string): Promise<String> {
+    async url(ids: PhotoIdDtos): Promise<String> {
 
-        const key = `${userid}/${photoid}`;
+        const key = `${ids.userid}/${ids.photoid}`;
 
         const command = new PutObjectCommand({
             Bucket: 'bucket-serverless-github-challenge',
-            Key: key,
-            ContentType: contentType
+            Key: key
         });
 
         const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
@@ -54,20 +55,20 @@ export class PhotoDatasources {
 
         return !!respose
     }
-    async getById(photoid: string, userid:string): Promise<PhotoEntity> {
+    async getById(ids: PhotoIdDtos): Promise<PhotoEntity> {
         const params = {
             TableName: 'Rol',
-            Key: { pk: `USER#${userid}`, sk: `PHOTO#${photoid}` }
+            Key: { pk: `USER#${ids.userid}`, sk: `PHOTO#${ids.photoid}` }
         };
         const { Item } = await dynamoDb.send(new GetCommand(params));
         if (!Item) throw CustomError.badRequest("No exite la imagen");
 
         return PhotoEntity.fromObject(Item!);
     }
-    async delete(photoid:string, userid: string): Promise<boolean> {
+    async delete(ids: PhotoIdDtos): Promise<boolean> {
         const params = {
             TableName: 'Rol',
-            Key: { pk: `USER#${userid}`, sk:`PHOTO#${photoid}` },
+            Key: { pk: `USER#${ids.userid}`, sk:`PHOTO#${ids.photoid}` },
             UpdateExpression: 'SET #gsi1sk = :newStateIndex, #gsi2pk= :newStateIndex2, #state = :newState',
             ExpressionAttributeNames: {
                 '#gsi1sk': 'gsi1sk',
@@ -86,17 +87,17 @@ export class PhotoDatasources {
         
         return !!response
     }
-    async getId( userid: string, lim: number, startkey?: string): Promise<{items: PhotoEntity[], startkey?: string}> {
+    async getId( paginate: PaginateDtos): Promise<{items: PhotoEntity[], startkey?: string}> {
         const params = {
             TableName: 'Rol',
             IndexName: 'GSI1',
             KeyConditionExpression: 'gsi1pk = :pk AND begins_with(gsi1sk, :statePrefix)',
             ExpressionAttributeValues: {
-                ':pk': `PHOTO#USER#${userid}`,
+                ':pk': `PHOTO#USER#${paginate.id}`,
                 ':statePrefix': 'STATE#1'
             },
-            Limit: lim,
-            ...(startkey ? {ExclusiveStartKey: { pk: `USER#${userid}`, sk: `PHOTO#${startkey}`, gsi1sk: 'STATE#1', gsi1pk: `PHOTO#USER#${userid}`}} : {})
+            Limit: paginate.lim,
+            ...(paginate.startkey ? {ExclusiveStartKey: { pk: `USER#${paginate.id}`, sk: `PHOTO#${paginate.startkey}`, gsi1sk: 'STATE#1', gsi1pk: `PHOTO#USER#${paginate.id}`}} : {})
         };
 
         const { Items, LastEvaluatedKey } = await dynamoDb.send(new QueryCommand(params));
@@ -106,7 +107,7 @@ export class PhotoDatasources {
             startkey: LastEvaluatedKey ? LastEvaluatedKey.sk.replace('PHOTO#', '') : null
         };
     }
-    async getAll( lim: number, startkey?: string): Promise<{items: PhotoEntity[], startkey?: string}>{
+    async getAll( paginate: PaginateDtos): Promise<{items: PhotoEntity[], startkey?: string}>{
         let nextPageToken;
 
         const params = {
@@ -117,11 +118,11 @@ export class PhotoDatasources {
                 ':pk': 'ENTITY#PHOTO',
                 ':state': 'STATE#1'
             },
-            Limit: lim,
-            ...(startkey ? {
+            Limit: paginate.lim,
+            ...(paginate.startkey ? {
                 ExclusiveStartKey: { 
-                    pk: `USER#${startkey.split('-')[0]}`, 
-                    sk: `PHOTO#${startkey.split('-')[1]}`, 
+                    pk: `USER#${paginate.startkey!.split('-')[0]}`, 
+                    sk: `PHOTO#${paginate.startkey!.split('-')[1]}`, 
                     gsi2sk: 'STATE#1', 
                     gsi2pk: 'ENTITY#PHOTO'
                 }
@@ -137,10 +138,10 @@ export class PhotoDatasources {
                     startkey: nextPageToken
                 };
     }
-    async transform( photo: TransformationsPhotoDtos ): Promise<Buffer<ArrayBufferLike>>{
+    async transform( photo: PhotoDtos ): Promise<Buffer<ArrayBufferLike>>{
         const params = {
             Bucket: 'bucket-serverless-github-challenge',
-            Key: `${photo.userid}/${photo.photoid}`
+            Key: `${photo.ids.userid}/${photo.ids.photoid}`
         };
 
         const response = await s3Client.send(new GetObjectCommand(params));
@@ -149,7 +150,7 @@ export class PhotoDatasources {
         const buffer = await streamToBuffer(response.Body as Readable);
         if (!buffer) throw CustomError.badRequest("No se pudo obtener la imagen");
 
-        const imagebuffer = (await new PhotoTransformer(buffer).applyAll(photo)).getBuffer();
+        const imagebuffer = (await new PhotoTransformer(buffer).applyAll(photo.transformations)).getBuffer();
         if (!imagebuffer) throw CustomError.badRequest("No se pudo obtener la imagen");
 
   

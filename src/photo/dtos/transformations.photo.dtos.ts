@@ -1,13 +1,10 @@
-
 import { FiltersPhotoDtos } from "./filters.photo.dtos";
 import { NormalisePhotoDtos } from "./normalise.photo.dtos";
 import { ResizePhotoDtos } from "./resize.photo.dtos";
 
-export class TransformationsPhotoDtos {
+export class TransformationsPhotoDtos{
 
     private constructor(
-        public readonly photoid:string,
-        public readonly userid:string,
         public readonly resize?:ResizePhotoDtos,
         public readonly rotate?:number,
         public readonly median?:number,
@@ -21,13 +18,12 @@ export class TransformationsPhotoDtos {
 
 
     static create(props: {[key:string]:any}): [string?, TransformationsPhotoDtos?]{
-        const { photoid, userid, resize, rotate, median, blur, 
-                flip, flop, format, filters, 
-                normalise } = props;
-        let flipbool = flip, flopbool = flop;
-        
-        if (!photoid) return ['Missing photo id'];
-        if (!userid) return ['Missing user id'];
+        const { resize, rotate, median, blur, 
+                flip, flop, format, filters, normalise } = props;
+                
+        let flipbool = flip, 
+            flopbool = flop;
+
         if (rotate && isNaN(Number(rotate))) return ['Missing rotate'];
         if (median && isNaN(Number(median))) return ['Missing median'];
         if (blur && isNaN(Number(blur))) return ['Missing blur'];
@@ -43,9 +39,9 @@ export class TransformationsPhotoDtos {
         return  [
             undefined, 
             new TransformationsPhotoDtos(
-                photoid, userid, resizeDto, rotate, median, 
-                blur, flipbool, flopbool, format, filtersDto, 
-                normaliseDtos
+                resizeDto, rotate, median, 
+                blur, flipbool, flopbool, 
+                format, filtersDto, normaliseDtos
             )
         ]
         
