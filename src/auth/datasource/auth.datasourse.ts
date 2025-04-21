@@ -41,8 +41,7 @@ export class AuthDatasources {
     }
     async register(register:RegisterDtos): Promise<AuthEntityDtos> {
 
-        await new RolDatasources().getById('user')
-
+        // await new RolDatasources().getById('user');
         const params = { 
             TableName: 'Rol',
             IndexName: 'GSI2', // Nombre del índice secundario global

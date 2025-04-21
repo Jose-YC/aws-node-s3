@@ -34,7 +34,7 @@ export const create = async (event: APIGatewayProxyEvent, context)=> {
 };
 export const get = async (event: APIGatewayProxyEvent) => {
   const { lim = 5 , startkey } = event.queryStringParameters!;
-      const [err, paginate] = PaginateDtos.create({lim, startkey});
+      const [err, paginate] = PaginateDtos.create({lim: +lim, startkey});
       if (err) return formatErrorResponse(CustomError.badRequest(err));
 
 

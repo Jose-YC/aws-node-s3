@@ -8,7 +8,7 @@ import { CreatePhotoDtos } from '../dtos/create.photo.dtos';
 import { PhotoEntity } from '../entity/photo';
 import { streamToBuffer } from '../handler/buffer.photo';
 import { PhotoTransformer } from '../handler/transformations.handler';
-import { PhotoDtos } from '../dtos/update.phoo.dtos';
+import { PhotoDtos } from '../dtos/update.photo.dtos';
 import { PaginateDtos } from '../../DTO/paginate.dtos';
 import { PhotoIdDtos } from '../dtos/id.photo.dtos';
 
@@ -20,7 +20,8 @@ export class PhotoDatasources {
 
         const command = new PutObjectCommand({
             Bucket: 'bucket-serverless-github-challenge',
-            Key: key
+            Key: key,
+            ContentType: 'image/*'
         });
 
         const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
@@ -139,21 +140,23 @@ export class PhotoDatasources {
                 };
     }
     async transform( photo: PhotoDtos ): Promise<Buffer<ArrayBufferLike>>{
+
         const params = {
             Bucket: 'bucket-serverless-github-challenge',
             Key: `${photo.ids.userid}/${photo.ids.photoid}`
         };
 
-        const response = await s3Client.send(new GetObjectCommand(params));
-        if (response.$metadata.httpStatusCode !== 200) throw CustomError.badRequest("No se pudo obtener la imagen");
+        const {Body, ContentLength, ContentType } = await s3Client.send(new GetObjectCommand(params));
+
+        if (ContentLength === 0) throw CustomError.badRequest("No se pudo obtener la imagen del s3");
+        if (ContentType && !ContentType.startsWith('image/')) throw CustomError.badRequest("El formato de la imagen no es valido");
         
-        const buffer = await streamToBuffer(response.Body as Readable);
-        if (!buffer) throw CustomError.badRequest("No se pudo obtener la imagen");
+        const buffer = await streamToBuffer(Body as Readable);
+        if (!buffer || buffer.length === 0) throw CustomError.badRequest("No se pudo obtener la imagen del buffer");
 
         const imagebuffer = (await new PhotoTransformer(buffer).applyAll(photo.transformations)).getBuffer();
-        if (!imagebuffer) throw CustomError.badRequest("No se pudo obtener la imagen");
+        if (!imagebuffer) throw CustomError.badRequest("No se pudo obtener la imagen de la transformacion");
 
-  
         return imagebuffer
     }
 }

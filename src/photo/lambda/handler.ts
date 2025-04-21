@@ -3,7 +3,7 @@ import { APIGatewayProxyEvent, S3Event } from 'aws-lambda';
 import { PhotoDatasources } from '../datasource/photo.datasource';
 import { formatErrorResponse } from '../../handler/error.handler';
 import { CustomError } from '../../handler/errors/custom.error';
-import { PhotoDtos } from '../dtos/update.phoo.dtos';
+import { PhotoDtos } from '../dtos/update.photo.dtos';
 import { PhotoIdDtos } from '../dtos/id.photo.dtos';
 import { PaginateDtos } from '../../DTO/paginate.dtos';
 
@@ -43,7 +43,7 @@ export const create = async (event: S3Event)=> {
 export const getId = async (event: APIGatewayProxyEvent) => {
   const { lim = 5 , startkey } = event.queryStringParameters!;
   const { id } = event.requestContext.authorizer!;
-  const [err, paginate] = PaginateDtos.create({lim, startkey, id});
+  const [err, paginate] = PaginateDtos.create({lim: +lim, startkey, id});
   if (err) return formatErrorResponse(CustomError.badRequest(err));
 
   try {
@@ -65,7 +65,7 @@ export const getId = async (event: APIGatewayProxyEvent) => {
 };
 export const getAll = async (event: APIGatewayProxyEvent) => {
   const { lim = 5 , startkey } = event.queryStringParameters!;
-  const [err, paginate] = PaginateDtos.create({lim, startkey});
+  const [err, paginate] = PaginateDtos.create({lim: +lim, startkey});
   if (err) return formatErrorResponse(CustomError.badRequest(err));
 
   try {
@@ -133,8 +133,10 @@ export const elimination = async (event: APIGatewayProxyEvent) => {
 export const transform = async (event: APIGatewayProxyEvent) => {
   const body = JSON.parse(event.body!);
   const { photoid } = event.pathParameters!;
-  const { id } = event.requestContext.authorizer!;
-  const [err, transformations] = PhotoDtos.create({photoid, userid: id, ...body.transformations});
+  const { id:userid } = event.requestContext.authorizer!;
+
+  
+  const [err, transformations] = PhotoDtos.create({ids: {photoid, userid}, transformations:{...body.transformations}  });
   if (err) return formatErrorResponse(CustomError.badRequest(err));
 
   try {

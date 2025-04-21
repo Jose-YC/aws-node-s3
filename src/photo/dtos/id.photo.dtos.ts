@@ -7,8 +7,8 @@ export class PhotoIdDtos {
 
     static create(props: {[key:string]:any}): [string?, PhotoIdDtos?]{
         const { userid, photoid } = props;
-        if (!photoid) return ['Missing name'];
-        if (!userid) return ['Missing rol'];
+        if (!photoid) return ['Missing photoid'];
+        if (!userid) return ['Missing userid'];
         return [undefined, new PhotoIdDtos( userid, photoid)] 
     }
 }

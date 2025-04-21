@@ -16,13 +16,29 @@ export class TransformationsPhotoDtos{
         public readonly normalise?:NormalisePhotoDtos,
     ){}
 
+    get values(): { [key: string]: string } {
+        const transformations: { [key: string]: any } = {};
+        if (this.resize) transformations.resize = this.resize;
+        if (this.rotate) transformations.rotate = this.rotate;
+        if (this.median) transformations.median = this.median;
+        if (this.blur) transformations.blur = this.blur;
+        if (this.flip) transformations.flip = this.flip;
+        if (this.flop) transformations.flop = this.flop;
+        if (this.format) transformations.format = this.format;
+        if (this.filters) transformations.filters = this.filters;
+        if (this.normalise) transformations.normalise = this.normalise;
+        return transformations;
+      }
 
     static create(props: {[key:string]:any}): [string?, TransformationsPhotoDtos?]{
         const { resize, rotate, median, blur, 
                 flip, flop, format, filters, normalise } = props;
                 
         let flipbool = flip, 
-            flopbool = flop;
+            flopbool = flop, 
+            resizeDto:ResizePhotoDtos|undefined, 
+            normaliseDto:NormalisePhotoDtos|undefined, 
+            filtersDto:FiltersPhotoDtos|undefined;
 
         if (rotate && isNaN(Number(rotate))) return ['Missing rotate'];
         if (median && isNaN(Number(median))) return ['Missing median'];
@@ -30,18 +46,27 @@ export class TransformationsPhotoDtos{
         if (flip && typeof flip !== 'boolean') flipbool = (flip === 'true');
         if (flop && typeof flop !== 'boolean') flopbool = (flop === 'true');
         
-        const [err, resizeDto] =  ResizePhotoDtos.fromObject(resize);
-        if (err) return [err];
-        const [errnorm, normaliseDtos] =  NormalisePhotoDtos.fromObject(normalise);
-        if (errnorm) return [errnorm];
-        const filtersDto =  FiltersPhotoDtos.fromObject(filters);
+        if (resize) {
+            const [err, datosResize] =  ResizePhotoDtos.fromObject(resize);
+            if (err) return [err];
+            resizeDto = datosResize;
+        }
+
+        if (normalise) {
+            const [error, datosNormalise] =  NormalisePhotoDtos.fromObject(normalise);
+            if (error) return [error];
+            normaliseDto = datosNormalise;
+        }
+        
+        if (filters) filtersDto =  FiltersPhotoDtos.fromObject(filters);
+        
 
         return  [
             undefined, 
             new TransformationsPhotoDtos(
                 resizeDto, rotate, median, 
                 blur, flipbool, flopbool, 
-                format, filtersDto, normaliseDtos
+                format, filtersDto, normaliseDto
             )
         ]
         

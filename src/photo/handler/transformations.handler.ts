@@ -57,7 +57,7 @@ export class PhotoTransformer {
     async applyAll( alltransfor: TransformationsPhotoDtos ): Promise<this> {
       if (!alltransfor) return this;
 
-      await this.applyTransformations(alltransfor);
+      await this.applyTransformations(alltransfor.values);
       
       if (alltransfor.filters) await this.applyFilters(alltransfor.filters);
       

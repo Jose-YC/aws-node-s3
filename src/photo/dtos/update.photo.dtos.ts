@@ -9,10 +9,11 @@ export class PhotoDtos {
     ){}
 
     static create(props: {[key:string]:any}): [string?, PhotoDtos?]{
-        const { ids, photoid } = props;
+        const { ids, transformations } = props;  
+
         const [err, idDto] =  PhotoIdDtos.create(ids);
         if (err) return [err];
-        const [error, transformationsDto] =  TransformationsPhotoDtos.create(photoid);
+        const [error, transformationsDto] =  TransformationsPhotoDtos.create(transformations);
         if (error) return [error];
         return [undefined, new PhotoDtos( idDto!, transformationsDto!)] 
     }
