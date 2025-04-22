@@ -27,6 +27,9 @@ export class UpdateRolDtos {
     static create(props: {[key:string]:any}): [string?, UpdateRolDtos?]{
         const { name, description } = props;
 
+        if (!description) return ['Missing description'];
+        if (!name) return ['Missing name'];
+
         return [undefined, new UpdateRolDtos(name, description)]
     }
 }

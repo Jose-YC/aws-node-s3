@@ -4,7 +4,6 @@ export class UserEntity {
         public id:string,
         public name:string,
         public email:string,
-        public password:string,
         public rol:string,
     ){}
 
@@ -13,8 +12,7 @@ export class UserEntity {
         if (!id) console.log('id not exist');
         if (!name) console.log('name not exist');
         if (!email) console.log('email not exist');
-        if (!password) console.log('password not exist');
         if (!rol) console.log('rol not exist');
-        return new UserEntity(id, name, email, password, rol);
+        return new UserEntity(id, name, email, rol);
     }
 }

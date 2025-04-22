@@ -8,7 +8,7 @@ export class CreateRolDtos {
 
     static create(props: {[key:string]:any}): [string?, CreateRolDtos?]{
         const { name, description} = props;
-        if (!description) return ['Missing name'];
+        if (!description) return ['Missing description'];
         if (!name) return ['Missing name'];
         return [undefined, new CreateRolDtos(name, description)]
     }

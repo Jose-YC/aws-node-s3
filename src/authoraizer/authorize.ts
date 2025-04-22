@@ -4,7 +4,7 @@ import { UserDatasources } from '../user/datasource/user.datasource';
 import { generatePolicy } from '../handler/error.handler';
 
 
-export const authorize = async (event: APIGatewayTokenAuthorizerEvent): Promise<APIGatewayAuthorizerResult >=> {
+export const handler = async (event: APIGatewayTokenAuthorizerEvent): Promise<APIGatewayAuthorizerResult >=> {
 
   const xtoken = event.authorizationToken;
   if (!xtoken) return generatePolicy('unauthorized','Deny', event.methodArn);

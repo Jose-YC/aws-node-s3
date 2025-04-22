@@ -84,11 +84,11 @@ custom:
 
 functions:
   authorize:
-    handler: src/authoraizer/handler.authorize
+    handler: src/authoraizer/authorize.handler
     layers:
         - { Ref: BaseLambdaLayer }
   login:
-      handler: src/auth/lambda/handler.login
+      handler: src/auth/lambda/login.handler
       layers:
       - { Ref: BaseLambdaLayer }
       environment:
@@ -98,7 +98,7 @@ functions:
             path: /auth/login
             method: post
   register:
-      handler: src/auth/lambda/handler.register
+      handler: src/auth/lambda/register.handler
       layers:
       - { Ref: BaseLambdaLayer }
       environment:
@@ -108,17 +108,20 @@ functions:
             path: /auth/register
             method: post
   renew:
-      handler: src/auth/lambda/handler.renew
+      handler: src/auth/lambda/renew.handler
       layers:
       - { Ref: BaseLambdaLayer }
       environment:
         ROL_TABLE: { Ref: RolTable }
       events:
         - http:
+            authorizer:
+              name: authorize
+              resultTtlInSeconds: 15
             path: /auth/renew
             method: get
   rolcreate:
-    handler: src/rol/lambda/handler.create
+    handler: src/rol/lambda/create.handler
     environment:
       ROL_TABLE: { Ref: RolTable }
     events:
@@ -129,7 +132,7 @@ functions:
           path: /rol/create
           method: post
   rolget:
-    handler: src/rol/lambda/handler.get
+    handler: src/rol/lambda/get.handler
     environment:
       ROL_TABLE: 
         Ref: RolTable
@@ -141,7 +144,7 @@ functions:
           path: /rol
           method: get
   rolgetbyid:
-    handler: src/rol/lambda/handler.getById
+    handler: src/rol/lambda/getById.handler
     environment:
       ROL_TABLE: 
         Ref: RolTable
@@ -153,7 +156,7 @@ functions:
           path: /rol/{name}
           method: get
   rolupdate:
-    handler: src/rol/lambda/handler.update
+    handler: src/rol/lambda/update.handler
     environment:
       ROL_TABLE: 
         Ref: RolTable
@@ -165,7 +168,7 @@ functions:
           path: /rol/update/{name}
           method: put
   roldelete:
-    handler: src/rol/lambda/handler.elimination
+    handler: src/rol/lambda/delete.handler
     environment:
       ROL_TABLE: 
         Ref: RolTable
@@ -177,7 +180,7 @@ functions:
           path: /rol/delete/{name}
           method: delete
   usercreate:
-    handler: src/user/lambda/handler.create
+    handler: src/user/lambda/create.handler
     layers:
       - { Ref: BaseLambdaLayer }
     environment:
@@ -190,7 +193,7 @@ functions:
           path: /user/create
           method: post
   userget:
-    handler: src/user/lambda/handler.get
+    handler: src/user/lambda/get.handler
     environment:
       ROL_TABLE: 
         Ref: RolTable
@@ -202,7 +205,7 @@ functions:
             resultTtlInSeconds: 15
           method: get
   usergetbyid:
-    handler: src/user/lambda/handler.getById
+    handler: src/user/lambda/getById.handler
     environment:
       ROL_TABLE: 
         Ref: RolTable
@@ -214,7 +217,7 @@ functions:
           path: /user/{id}
           method: get
   userdelete:
-    handler: src/user/lambda/handler.elimination
+    handler: src/user/lambda/delete.handler
     environment:
       ROL_TABLE: 
         Ref: RolTable
@@ -226,7 +229,7 @@ functions:
           path: /user/delete/{id}
           method: delete
   photourl:
-    handler: src/photo/lambda/handler.urlPhoto
+    handler: src/photo/lambda/urlPhoto.handler
     layers:
       - { Ref: BaseLambdaLayer }
     environment:
@@ -240,7 +243,7 @@ functions:
           path: /photo/url
           method: get
   photopost:
-    handler: src/photo/lambda/handler.create
+    handler: src/photo/lambda/create.handler
     layers:
       - { Ref: BaseLambdaLayer }
     environment:
@@ -252,7 +255,7 @@ functions:
           event: s3:ObjectCreated:*
           existing: true
   photoget:
-    handler: src/photo/lambda/handler.getId
+    handler: src/photo/lambda/getId.handler
     layers:
       - { Ref: BaseLambdaLayer }
     environment:
@@ -266,7 +269,7 @@ functions:
           path: /photo
           method: get
   photogetall:
-    handler: src/photo/lambda/handler.getAll
+    handler: src/photo/lambda/getAll.handler
     layers:
       - { Ref: BaseLambdaLayer }
     environment:
@@ -280,7 +283,7 @@ functions:
           path: /photo/all
           method: get
   photogetbyid:
-    handler: src/photo/lambda/handler.getById
+    handler: src/photo/lambda/getById.handler
     layers:
       - { Ref: BaseLambdaLayer }
     environment:
@@ -294,7 +297,7 @@ functions:
           path: /photo/{photoid}
           method: get
   photodelete:
-    handler: src/photo/lambda/handler.elimination
+    handler: src/photo/lambda/delete.handler
     layers:
       - { Ref: BaseLambdaLayer }
     environment:
@@ -308,7 +311,7 @@ functions:
           path: /photo/delete/{userid}
           method: delete
   phototransform:
-    handler: src/photo/lambda/handler.transform
+    handler: src/photo/lambda/handler.transformations
     layers:
       - { Ref: BaseLambdaLayer }
     environment:

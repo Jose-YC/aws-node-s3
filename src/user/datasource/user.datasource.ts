@@ -17,7 +17,7 @@ export class UserDatasources {
 
     async post(user: CreateUserDtos): Promise<boolean> {
 
-        await new RolDatasources().getById(user.rolName)
+        await new RolDatasources().getById(user.rol)
 
         const password = bcryptjsAdapter.hash(user.password);
         const params = {
@@ -36,7 +36,7 @@ export class UserDatasources {
                 name: user.name,
                 email: user.email,
                 password,
-                rol: user.rolName,
+                rol: user.rol,
                 state: 1,
                 _createdAt: new Date().toISOString(),
                 _updateAt: new Date().toISOString()

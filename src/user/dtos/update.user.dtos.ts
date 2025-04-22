@@ -33,7 +33,7 @@ export class UpdateUserDtos {
         const { id, name, password } = props;
 
         if (!id) return ['Falta el id'];
-        if (password) if(password.length < 6) return ['Password to short'];
+        if(password && password.length < 6) return ['Password to short'];
 
         return [undefined, new UpdateUserDtos(id, name, password)]
     }
