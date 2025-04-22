@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "sls deploy",
     "destroy": "sls remove",
-    "prepare-layer": "mkdir nodejs && cp package.json package-lock.json nodejs && cd nodejs && npm i --production --cpu=x64 --os=linux && rm package.json package-lock.json && cd .. && zip -r nodejs.zip nodejs"
+    "layer": "mkdir nodejs && cp package.json package-lock.json nodejs && cd nodejs && npm i --production --cpu=x64 --os=linux && rm package.json package-lock.json && cd .. && zip -r nodejs.zip nodejs"
   },
   "keywords": [],
   "author": "",
