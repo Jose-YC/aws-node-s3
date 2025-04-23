@@ -311,7 +311,7 @@ functions:
           path: /photo/delete/{userid}
           method: delete
   phototransform:
-    handler: src/photo/lambda/handler.transformations
+    handler: src/photo/lambda/transformations.handler
     layers:
       - { Ref: BaseLambdaLayer }
     environment:

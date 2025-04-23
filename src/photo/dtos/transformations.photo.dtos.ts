@@ -11,7 +11,6 @@ export class TransformationsPhotoDtos{
         public readonly blur?:number,
         public readonly flip?:boolean,
         public readonly flop?:boolean,
-        public readonly format?:string,
         public readonly filters?:FiltersPhotoDtos,
         public readonly normalise?:NormalisePhotoDtos,
     ){}
@@ -24,7 +23,6 @@ export class TransformationsPhotoDtos{
         if (this.blur) transformations.blur = this.blur;
         if (this.flip) transformations.flip = this.flip;
         if (this.flop) transformations.flop = this.flop;
-        if (this.format) transformations.format = this.format;
         if (this.filters) transformations.filters = this.filters;
         if (this.normalise) transformations.normalise = this.normalise;
         return transformations;
@@ -32,7 +30,7 @@ export class TransformationsPhotoDtos{
 
     static create(props: {[key:string]:any}): [string?, TransformationsPhotoDtos?]{
         const { resize, rotate, median, blur, 
-                flip, flop, format, filters, normalise } = props;
+                flip, flop, filters, normalise } = props;
                 
         let flipbool = flip, 
             flopbool = flop, 
@@ -66,7 +64,7 @@ export class TransformationsPhotoDtos{
             new TransformationsPhotoDtos(
                 resizeDto, rotate, median, 
                 blur, flipbool, flopbool, 
-                format, filtersDto, normaliseDto
+                filtersDto, normaliseDto
             )
         ]
         

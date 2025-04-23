@@ -1,10 +1,12 @@
 
+import { ulid } from 'ulid';
 import { APIGatewayProxyEvent } from 'aws-lambda';
 import { PhotoDatasources } from '../datasource/photo.datasource';
 import { formatErrorResponse, CustomError } from '../../handler';
 import { PhotoDtos } from '../dtos';
+import { PutObjectCommand, s3Client } from '../../data/Dynamodb/dynamodb';
 
-export const transform = async (event: APIGatewayProxyEvent) => {
+export const handler = async (event: APIGatewayProxyEvent) => {
   const body = JSON.parse(event.body!);
   const { photoid } = event.pathParameters!;
   const { id:userid } = event.requestContext.authorizer!;
@@ -12,13 +14,25 @@ export const transform = async (event: APIGatewayProxyEvent) => {
   const [err, transformations] = PhotoDtos.create({ids: {photoid, userid}, transformations:{...body.transformations}  });
   if (err) return formatErrorResponse(CustomError.badRequest(err));
 
+  
   try {
-      const image = await new PhotoDatasources().transform(transformations!)
+    const {imagebuffer:image, type } = await new PhotoDatasources().transform(transformations!);
+    const bucket = 'bucket-serverless-github-challenge';
+    const key = `${userid}/${ulid()}.${type}`;
+
+      const uploadParams = {
+        Bucket: bucket,
+        Key: key,
+        Body: image,
+        ContentType: `image/${type}`,
+      };  
+
+      await s3Client.send(new PutObjectCommand(uploadParams));
 
       return {
         statusCode: 200,
         body: JSON.stringify({
-          imageUrl: `data:image/jpeg;base64,${image.toString('base64')}`
+          imageUrl: `https://${bucket}.s3.amazonaws.com/${key}`,
         })
       };    
     

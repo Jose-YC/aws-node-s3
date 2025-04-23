@@ -1,27 +1,23 @@
 import { Readable } from 'stream';
 import { dynamoDb, PutCommand, GetCommand, 
          QueryCommand, UpdateCommand, PutObjectCommand, 
-         getSignedUrl, s3Client,
-         GetObjectCommand} from '../../data/Dynamodb/dynamodb';
+         getSignedUrl, s3Client, GetObjectCommand} from '../../data/Dynamodb/dynamodb';
 import { CustomError } from '../../handler/errors/custom.error';
-import { CreatePhotoDtos } from '../dtos/create.photo.dtos';
-import { PhotoEntity } from '../entity/photo';
-import { streamToBuffer } from '../handler/buffer.photo';
-import { PhotoTransformer } from '../handler/transformations.handler';
-import { PhotoDtos } from '../dtos/update.photo.dtos';
+import { CreatePhotoDtos, PhotoIdDtos, PhotoDtos } from '../dtos';
+import { streamToBuffer, PhotoTransformer } from '../handler';
 import { PaginateDtos } from '../../DTO/paginate.dtos';
-import { PhotoIdDtos } from '../dtos/id.photo.dtos';
+import { PhotoEntity } from '../entity/photo';
 
 export class PhotoDatasources {
 
-    async url(ids: PhotoIdDtos): Promise<String> {
+    async url(ids: PhotoIdDtos, contentType: string): Promise<String> {
 
-        const key = `${ids.userid}/${ids.photoid}`;
+        const key = `${ids.userid}/${ids.photoid}.${contentType}`;
 
         const command = new PutObjectCommand({
             Bucket: 'bucket-serverless-github-challenge',
             Key: key,
-            ContentType: 'image/*'
+            ContentType: `image/${contentType}`,
         });
 
         const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
@@ -45,6 +41,7 @@ export class PhotoDatasources {
                 id: photo.id,
                 url: photo.url,
                 userid: photo.userid,
+                type: photo.type,
                 state: 1,
                 _createdAt: new Date().toISOString(),
                 _updateAt: new Date().toISOString()
@@ -139,11 +136,13 @@ export class PhotoDatasources {
                     startkey: nextPageToken
                 };
     }
-    async transform( photo: PhotoDtos ): Promise<Buffer<ArrayBufferLike>>{
+    async transform( photo: PhotoDtos ): Promise<{imagebuffer: Buffer<ArrayBufferLike>, type: string}> {
+
+        const image = await this.getById(photo.ids)
 
         const params = {
             Bucket: 'bucket-serverless-github-challenge',
-            Key: `${photo.ids.userid}/${photo.ids.photoid}`
+            Key: `${image.userid}/${image.id}.${image.type}`,
         };
 
         const {Body, ContentLength, ContentType } = await s3Client.send(new GetObjectCommand(params));
@@ -154,9 +153,9 @@ export class PhotoDatasources {
         const buffer = await streamToBuffer(Body as Readable);
         if (!buffer || buffer.length === 0) throw CustomError.badRequest("No se pudo obtener la imagen del buffer");
 
-        const imagebuffer = (await new PhotoTransformer(buffer).applyAll(photo.transformations)).getBuffer();
+        const imagebuffer = await (await new PhotoTransformer(buffer).applyAll(photo.transformations)).getBuffer();
         if (!imagebuffer) throw CustomError.badRequest("No se pudo obtener la imagen de la transformacion");
 
-        return imagebuffer
+        return {imagebuffer, type: image.type};
     }
 }
