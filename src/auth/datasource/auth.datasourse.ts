@@ -12,13 +12,13 @@ import { RolDatasources } from '../../rol/datasource/role.datasourse';
 export class AuthDatasources {
 
     constructor(
-        private readonly tableName = process.env.ROL_TABLE,
+        private readonly tableName = process.env.PHOTO_TABLE,
     ){}
 
     async login(login: LoginDtos): Promise<AuthEntityDtos> {
         
         const params = {
-            TableName: 'Rol',
+            TableName: this.tableName,
             IndexName: 'GSI2', // Nombre del índice secundario global
             KeyConditionExpression: 'gsi2pk = :state AND gsi2sk = :email',
             ExpressionAttributeValues: {
@@ -43,7 +43,7 @@ export class AuthDatasources {
 
         // await new RolDatasources().getById('user');
         const params = { 
-            TableName: 'Rol',
+            TableName: this.tableName,
             IndexName: 'GSI2', // Nombre del índice secundario global
             KeyConditionExpression: 'gsi2pk = :state AND gsi2sk = :email',
             ExpressionAttributeValues: {
@@ -58,7 +58,7 @@ export class AuthDatasources {
 
         const password = bcryptjsAdapter.hash(register.password);
         const paramsCreateUser = {
-            TableName: 'Rol',
+            TableName: this.tableName,
             Item: {
                 pk: `ENTITY#USER`,
                 sk: `USER#${register.id}`,

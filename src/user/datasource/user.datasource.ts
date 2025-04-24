@@ -12,7 +12,7 @@ import { PaginateDtos } from '../../DTO/paginate.dtos';
 export class UserDatasources {
 
     constructor(
-        private readonly tableName = process.env.ROL_TABLE,
+        private readonly tableName = process.env.PHOTO_TABLE,
     ){}
 
     async post(user: CreateUserDtos): Promise<boolean> {
@@ -21,7 +21,7 @@ export class UserDatasources {
 
         const password = bcryptjsAdapter.hash(user.password);
         const params = {
-            TableName: 'Rol',
+            TableName: this.tableName,
             Item: {
                 pk: `ENTITY#USER`,
                 sk: `USER#${user.id}`,
@@ -53,7 +53,7 @@ export class UserDatasources {
     async get(paginate: PaginateDtos): Promise<{items: UserEntity[], startkey?: string}> {
 
         const params = {
-            TableName: 'Rol',
+            TableName: this.tableName,
             IndexName: 'GSI1',
             KeyConditionExpression: 'gsi1pk = :pk AND begins_with(gsi1sk, :statePrefix)',
             ExpressionAttributeValues: {
@@ -73,7 +73,7 @@ export class UserDatasources {
     }
     async getById(id: string): Promise<UserEntity> {
         const params = {
-            TableName: 'Rol',
+            TableName: this.tableName,
             Key: { pk: 'ENTITY#USER', sk:`USER#${id}` }
         };
         const { Item } = await dynamoDb.send(new GetCommand(params));
@@ -85,7 +85,7 @@ export class UserDatasources {
     async delete(id:string): Promise<boolean> {
         this.getById(id);
          const params = {
-            TableName: 'Rol',
+            TableName: this.tableName,
             Key: { pk: 'ENTITY#USER', sk:`USER#${id}` },
             UpdateExpression: 'SET #gsi1sk = :newStateIndex, #gsi2pk= :newStateIndex2, #state = :newState',
             ExpressionAttributeNames: {
@@ -107,7 +107,7 @@ export class UserDatasources {
     }
     async put(user: UpdateUserDtos): Promise<boolean> {
         const params = {
-            TableName: 'Rol',
+            TableName: this.tableName,
             Key: { pk: 'ENTITY#USER', sk:`USER#${user.id}` },
             UpdateExpression: user.expression,
             ExpressionAttributeNames: user.attributeNames,

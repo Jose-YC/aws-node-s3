@@ -10,15 +10,15 @@ useDotenv: true
 provider:
   name: aws
   runtime: nodejs20.x
-  stage: dev 
-  region: us-east-1
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-east-1'}
   logs:
     restApi: true
   apiGateway:
     shouldStartNameWithService: true
   environment:
     REGION: ${self:provider.region}
-    BUCKET: bucket-serverless-github-challenge
+    BUCKET: ${self:custom.bucket.${self:provider.stage}}
     SECRET_JWT: ${ssm/SECRET_JWT}
   iam:
     role: 
@@ -33,16 +33,16 @@ provider:
             - dynamodb:UpdateItem
             - dynamodb:GetItem
           Resource:
-            - Fn::GetAtt: [RolTable, Arn]
+            - Fn::GetAtt: [PhotoTable, Arn]
             - Fn::Join:
                 - ""
-                - [Fn::GetAtt: [RolTable, Arn], "/index/*"]
+                - [Fn::GetAtt: [PhotoTable, Arn], "/index/*"]
         - Effect: Allow
           Action:
             - s3:PutObject
             - s3:GetObject
             - s3:DeleteObject
-          Resource: arn:aws:s3:::bucket-serverless-github-challenge/*
+          Resource: arn:aws:s3:::${self:custom.bucket.${self:provider.stage}}/*
 
 # plugins:
 #   - serverless-dynamodb
@@ -58,6 +58,10 @@ package:
     - "!*/**"
 
 custom:
+  bucket:
+    dev:  ${self:service}-dev-bucket-serverless
+    test: ${self:service}-test-bucket-serverless
+    prod: ${self:service}-prod-bucket-serverless
   dynamodb:
     stages:
       - dev
@@ -85,6 +89,8 @@ custom:
 functions:
   authorize:
     handler: src/authoraizer/authorize.handler
+    environment:
+      PHOTO_TABLE: { Ref: PhotoTable }
     layers:
         - { Ref: BaseLambdaLayer }
   login:
@@ -92,7 +98,7 @@ functions:
       layers:
       - { Ref: BaseLambdaLayer }
       environment:
-        ROL_TABLE: { Ref: RolTable }
+        PHOTO_TABLE: { Ref: PhotoTable }
       events:
         - http:
             path: /auth/login
@@ -102,7 +108,7 @@ functions:
       layers:
       - { Ref: BaseLambdaLayer }
       environment:
-        ROL_TABLE: { Ref: RolTable }
+        PHOTO_TABLE: { Ref: PhotoTable }
       events:
         - http:
             path: /auth/register
@@ -112,7 +118,7 @@ functions:
       layers:
       - { Ref: BaseLambdaLayer }
       environment:
-        ROL_TABLE: { Ref: RolTable }
+        PHOTO_TABLE: { Ref: PhotoTable }
       events:
         - http:
             authorizer:
@@ -123,7 +129,7 @@ functions:
   rolcreate:
     handler: src/rol/lambda/create.handler
     environment:
-      ROL_TABLE: { Ref: RolTable }
+      PHOTO_TABLE: { Ref: PhotoTable }
     events:
       - http:
           authorizer:
@@ -134,8 +140,7 @@ functions:
   rolget:
     handler: src/rol/lambda/get.handler
     environment:
-      ROL_TABLE: 
-        Ref: RolTable
+      PHOTO_TABLE: { Ref: PhotoTable }
     events:
       - http:
           authorizer:
@@ -146,8 +151,7 @@ functions:
   rolgetbyid:
     handler: src/rol/lambda/getById.handler
     environment:
-      ROL_TABLE: 
-        Ref: RolTable
+      PHOTO_TABLE: { Ref: PhotoTable }
     events:
       - http:
           authorizer:
@@ -158,8 +162,7 @@ functions:
   rolupdate:
     handler: src/rol/lambda/update.handler
     environment:
-      ROL_TABLE: 
-        Ref: RolTable
+      PHOTO_TABLE: { Ref: PhotoTable }
     events:
       - http:
           authorizer:
@@ -170,8 +173,7 @@ functions:
   roldelete:
     handler: src/rol/lambda/delete.handler
     environment:
-      ROL_TABLE: 
-        Ref: RolTable
+      PHOTO_TABLE: { Ref: PhotoTable }
     events:
       - http:
           authorizer:
@@ -184,7 +186,7 @@ functions:
     layers:
       - { Ref: BaseLambdaLayer }
     environment:
-      ROL_TABLE: { Ref: RolTable }
+      PHOTO_TABLE: { Ref: PhotoTable }
     events:
       - http:
           authorizer:
@@ -195,8 +197,7 @@ functions:
   userget:
     handler: src/user/lambda/get.handler
     environment:
-      ROL_TABLE: 
-        Ref: RolTable
+      PHOTO_TABLE: { Ref: PhotoTable }
     events:
       - http:
           path: /user
@@ -207,8 +208,7 @@ functions:
   usergetbyid:
     handler: src/user/lambda/getById.handler
     environment:
-      ROL_TABLE: 
-        Ref: RolTable
+      PHOTO_TABLE: { Ref: PhotoTable }
     events:
       - http:
           authorizer:
@@ -219,8 +219,7 @@ functions:
   userdelete:
     handler: src/user/lambda/delete.handler
     environment:
-      ROL_TABLE: 
-        Ref: RolTable
+      PHOTO_TABLE: { Ref: PhotoTable }
     events:
       - http:
           authorizer:
@@ -233,8 +232,8 @@ functions:
     layers:
       - { Ref: BaseLambdaLayer }
     environment:
-      ROL_TABLE: 
-        Ref: RolTable
+      PHOTO_TABLE: { Ref: PhotoTable }
+      BUCKET: ${self:provider.environment.BUCKET}
     events:
       - http:
           authorizer:
@@ -247,11 +246,12 @@ functions:
     layers:
       - { Ref: BaseLambdaLayer }
     environment:
-      ROL_TABLE: 
-        Ref: RolTable
+      PHOTO_TABLE: { Ref: PhotoTable }
+      BUCKET: ${self:provider.environment.BUCKET}
     events:
       - s3:
-          bucket: bucket-serverless-github-challenge
+          bucket: 
+            Ref: S3Bucket
           event: s3:ObjectCreated:*
           existing: true
   photoget:
@@ -259,8 +259,8 @@ functions:
     layers:
       - { Ref: BaseLambdaLayer }
     environment:
-      ROL_TABLE: 
-        Ref: RolTable
+      PHOTO_TABLE: { Ref: PhotoTable }
+      BUCKET: ${self:provider.environment.BUCKET}
     events:
       - http:
           authorizer:
@@ -273,8 +273,8 @@ functions:
     layers:
       - { Ref: BaseLambdaLayer }
     environment:
-      ROL_TABLE: 
-        Ref: RolTable
+      PHOTO_TABLE: { Ref: PhotoTable }
+      BUCKET: ${self:provider.environment.BUCKET}
     events:
       - http:
           authorizer:
@@ -287,8 +287,8 @@ functions:
     layers:
       - { Ref: BaseLambdaLayer }
     environment:
-      ROL_TABLE: 
-        Ref: RolTable
+      PHOTO_TABLE: { Ref: PhotoTable }
+      BUCKET: ${self:provider.environment.BUCKET}
     events:
       - http:
           authorizer:
@@ -301,8 +301,8 @@ functions:
     layers:
       - { Ref: BaseLambdaLayer }
     environment:
-      ROL_TABLE: 
-        Ref: RolTable
+      PHOTO_TABLE: { Ref: PhotoTable }
+      BUCKET: ${self:provider.environment.BUCKET}
     events:
       - http:
           authorizer:
@@ -315,8 +315,8 @@ functions:
     layers:
       - { Ref: BaseLambdaLayer }
     environment:
-      ROL_TABLE: 
-        Ref: RolTable
+      PHOTO_TABLE: { Ref: PhotoTable }
+      BUCKET: ${self:provider.environment.BUCKET}
     events:
       - http:
           authorizer:
@@ -339,10 +339,10 @@ layers:
 
 resources:
   Resources:
-    RolTable:
+    PhotoTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: Rol
+        TableName: Photo-${self:provider.stage}
         AttributeDefinitions:
           - AttributeName: pk
             AttributeType: S
@@ -390,7 +390,7 @@ resources:
     S3Bucket:
       Type: 'AWS::S3::Bucket'
       Properties:
-        BucketName: bucket-serverless-github-challenge
+        BucketName: ${self:custom.bucket.${self:provider.stage}}
         PublicAccessBlockConfiguration:
           BlockPublicAcls: false
           BlockPublicPolicy: false

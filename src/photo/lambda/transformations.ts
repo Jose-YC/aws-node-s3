@@ -17,7 +17,7 @@ export const handler = async (event: APIGatewayProxyEvent) => {
   
   try {
     const {imagebuffer:image, type } = await new PhotoDatasources().transform(transformations!);
-    const bucket = 'bucket-serverless-github-challenge';
+    const bucket = process.env.BUCKET
     const key = `${userid}/${ulid()}.${type}`;
 
       const uploadParams = {

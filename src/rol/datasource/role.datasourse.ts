@@ -11,13 +11,13 @@ import { PaginateDtos } from '../../DTO/paginate.dtos';
 export class RolDatasources {
 
     constructor(
-        private readonly tableName = process.env.ROL_TABLE,
+        private readonly tableName = process.env.PHOTO_TABLE,
     ){}
 
     async post(rol: CreateRolDtos): Promise<boolean> {
         
         const params = {
-            TableName: 'Rol',
+            TableName: this.tableName,
             Item: {
                 pk: 'ENTITY#ROL',
                 sk: `ROL#${rol.name}`,
@@ -42,7 +42,7 @@ export class RolDatasources {
     async get(paginate: PaginateDtos): Promise<{items: RolEntity[], startkey?: string}> {
 
         const params = {
-            TableName: 'Rol',
+            TableName: this.tableName,
             IndexName: 'GSI1',
             KeyConditionExpression: 'gsi1pk = :pk AND begins_with(gsi1sk, :statePrefix)',
             ExpressionAttributeValues: {
@@ -62,7 +62,7 @@ export class RolDatasources {
     }
     async getById(name:string): Promise<RolEntity> {
         const params = {
-            TableName: 'Rol',
+            TableName: this.tableName,
             Key: { pk: 'ENTITY#ROL', sk:`ROL#${name}` }
         };
         const { Item } = await dynamoDb.send(new GetCommand(params));
@@ -73,7 +73,7 @@ export class RolDatasources {
     async delete(name:string): Promise<boolean> {
         this.getById(name);
         const params = {
-            TableName: 'Rol',
+            TableName: this.tableName,
             Key: { pk: 'ENTITY#ROL', sk:`ROL#${name}` },
             UpdateExpression: 'SET #gsi1sk = :newStateIndex, #state = :newState',
             ExpressionAttributeNames: {
@@ -93,7 +93,7 @@ export class RolDatasources {
     }
     async put(rol: UpdateRolDtos ): Promise<boolean> {
         const params = {
-            TableName: 'Rol',
+            TableName: this.tableName,
             Key: { pk: 'ENTITY#ROL', sk:`ROL#${rol.name}` },
             UpdateExpression: rol.expression,
             ExpressionAttributeNames: rol.attributeNames,

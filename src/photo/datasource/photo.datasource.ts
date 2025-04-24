@@ -10,12 +10,17 @@ import { PhotoEntity } from '../entity/photo';
 
 export class PhotoDatasources {
 
+    constructor(
+        private readonly tableName = process.env.PHOTO_TABLE,
+        private readonly bucketName = process.env.BUCKET,
+    ){}
+
     async url(ids: PhotoIdDtos, contentType: string): Promise<String> {
 
         const key = `${ids.userid}/${ids.photoid}.${contentType}`;
 
         const command = new PutObjectCommand({
-            Bucket: 'bucket-serverless-github-challenge',
+            Bucket: this.bucketName,
             Key: key,
             ContentType: `image/${contentType}`,
         });
@@ -27,7 +32,7 @@ export class PhotoDatasources {
     }
     async post(photo: CreatePhotoDtos): Promise<boolean> {
         const params = {
-            TableName: 'Rol',
+            TableName: this.tableName,
             Item: {
                 pk: `USER#${photo.userid}`,
                 sk: `PHOTO#${photo.id}`,
@@ -55,7 +60,7 @@ export class PhotoDatasources {
     }
     async getById(ids: PhotoIdDtos): Promise<PhotoEntity> {
         const params = {
-            TableName: 'Rol',
+            TableName: this.tableName,
             Key: { pk: `USER#${ids.userid}`, sk: `PHOTO#${ids.photoid}` }
         };
         const { Item } = await dynamoDb.send(new GetCommand(params));
@@ -65,7 +70,7 @@ export class PhotoDatasources {
     }
     async delete(ids: PhotoIdDtos): Promise<boolean> {
         const params = {
-            TableName: 'Rol',
+            TableName: this.tableName,
             Key: { pk: `USER#${ids.userid}`, sk:`PHOTO#${ids.photoid}` },
             UpdateExpression: 'SET #gsi1sk = :newStateIndex, #gsi2pk= :newStateIndex2, #state = :newState',
             ExpressionAttributeNames: {
@@ -87,7 +92,7 @@ export class PhotoDatasources {
     }
     async getId( paginate: PaginateDtos): Promise<{items: PhotoEntity[], startkey?: string}> {
         const params = {
-            TableName: 'Rol',
+            TableName: this.tableName,
             IndexName: 'GSI1',
             KeyConditionExpression: 'gsi1pk = :pk AND begins_with(gsi1sk, :statePrefix)',
             ExpressionAttributeValues: {
@@ -109,7 +114,7 @@ export class PhotoDatasources {
         let nextPageToken;
 
         const params = {
-            TableName: 'Rol',
+            TableName: this.tableName,
             IndexName: 'GSI2',
             KeyConditionExpression: 'gsi2pk = :pk AND begins_with(gsi2sk, :state)',
             ExpressionAttributeValues: {
@@ -141,7 +146,7 @@ export class PhotoDatasources {
         const image = await this.getById(photo.ids)
 
         const params = {
-            Bucket: 'bucket-serverless-github-challenge',
+            Bucket: this.bucketName,
             Key: `${image.userid}/${image.id}.${image.type}`,
         };
 
