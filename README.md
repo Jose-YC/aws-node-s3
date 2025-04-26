@@ -94,6 +94,9 @@ npm run destroy
 
 ## Deployed Endpoints
 
+
+You can see more details about the endpoints at: https://documenter.getpostman.com/view/29992084/2sB2ixkEdp
+
 When deployed, the service exposes several endpoints:
 
 

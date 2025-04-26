@@ -1,3 +1,5 @@
+import { CustomError } from "../../handler";
+
 export class RolEntity {
 
     constructor(
@@ -7,8 +9,8 @@ export class RolEntity {
 
     static fromObject= (object:{[key:string]:any} ):RolEntity => {
         const { description, name } = object;
-        if (!description) console.log('description not exist');
-        if (!name) console.log('name not exist');
+        if (!description) CustomError.badRequest('description not exist');
+        if (!name) CustomError.badRequest('name not exist');
         return new RolEntity(name, description);
     }
 }

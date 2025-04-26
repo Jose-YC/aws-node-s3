@@ -1,3 +1,4 @@
+import { CustomError } from '../../handler';
 import { UserEntity } from '../../user/entity/user';
 
 
@@ -14,7 +15,7 @@ export class AuthEntityDtos {
         const {user, token, } = object;
         
         const userEntity = UserEntity.fromObject(user);
-        if (!token) console.log('no se genero el token');
+        if (!token) CustomError.badRequest('no se genero el token');
             
         return new AuthEntityDtos(userEntity, token);
     }
