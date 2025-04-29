@@ -2,8 +2,10 @@ import { APIGatewayProxyEvent } from "aws-lambda";
 import { CustomError, formatErrorResponse } from "../../handler";
 import { PaginateDtos } from "../../DTO/paginate.dtos";
 import { UserDatasources } from "../datasource/user.datasource";
+import { useMiddlewares } from "../../middleware/useMiddlewares";
+import { validateRol } from "../../authoraizer/middleware/rol.middleware";
 
-export const handler = async (event: APIGatewayProxyEvent) => {
+export const get = async (event: APIGatewayProxyEvent) => {
   const { lim = 5 , startkey } = event.queryStringParameters!;
   const [err, paginate] = PaginateDtos.create({lim: +lim, startkey});
   if (err) return formatErrorResponse(CustomError.badRequest(err));
@@ -32,3 +34,10 @@ export const handler = async (event: APIGatewayProxyEvent) => {
 
   }
 };
+
+export const handler = useMiddlewares({
+                        handler: get, 
+                        middlewares: [
+                          validateRol("admin"),
+                        ]
+                      });

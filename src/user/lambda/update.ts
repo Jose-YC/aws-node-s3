@@ -3,8 +3,10 @@ import { UpdateUserDtos } from '../dtos';
 import { CustomError, formatErrorResponse } from '../../handler';
 import { bcryptjsAdapter } from '../../plugins';
 import { UserDatasources } from '../datasource/user.datasource';
+import { useMiddlewares } from "../../middleware/useMiddlewares";
+import { validateRol } from "../../authoraizer/middleware/rol.middleware";
 
-export const handler = async (event: APIGatewayProxyEvent) => {
+export const update = async (event: APIGatewayProxyEvent) => {
   const { id } = event.pathParameters!;
   const { name, password } = JSON.parse(event.body!);
 
@@ -35,3 +37,11 @@ export const handler = async (event: APIGatewayProxyEvent) => {
 
   }
 };
+
+
+export const handler = useMiddlewares({
+                        handler: update, 
+                        middlewares: [
+                          validateRol("admin"),
+                        ]
+                      });

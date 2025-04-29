@@ -3,8 +3,10 @@ import { APIGatewayProxyEvent } from "aws-lambda";
 import { CustomError, formatErrorResponse } from "../../handler";
 import { UserDatasources } from "../datasource/user.datasource";
 import { CreateUserDtos } from "../dtos/create.user.dtos";
+import { useMiddlewares } from "../../middleware/useMiddlewares";
+import { validateRol } from "../../authoraizer/middleware/rol.middleware";
 
-export const handler = async (event: APIGatewayProxyEvent)=> {
+export const create = async (event: APIGatewayProxyEvent)=> {
 
   const {name, email, password, rol} = JSON.parse(event.body!);
 
@@ -34,3 +36,10 @@ export const handler = async (event: APIGatewayProxyEvent)=> {
   }
 
 };
+
+export const handler = useMiddlewares({
+                        handler: create, 
+                        middlewares: [
+                          validateRol("admin"),
+                        ]
+                      });

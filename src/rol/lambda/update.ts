@@ -2,8 +2,10 @@ import { APIGatewayProxyEvent } from "aws-lambda";
 import { CustomError, formatErrorResponse } from "../../handler";
 import { UpdateRolDtos } from "../dtos/update.rol.dtos";
 import { RolDatasources } from "../datasource/role.datasourse";
+import { useMiddlewares } from "../../middleware/useMiddlewares";
+import { validateRol } from "../../authoraizer/middleware/rol.middleware";
 
-export const handler = async (event: APIGatewayProxyEvent) => {
+export const update = async (event: APIGatewayProxyEvent) => {
   const { name } = event.pathParameters!;
   const { description } = JSON.parse(event.body!);
 
@@ -26,3 +28,10 @@ export const handler = async (event: APIGatewayProxyEvent) => {
     return formatErrorResponse(error);     
   }
 };
+
+export const handler = useMiddlewares({
+                        handler: update, 
+                        middlewares: [
+                          validateRol("admin"),
+                        ]
+                      });

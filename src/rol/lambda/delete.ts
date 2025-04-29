@@ -1,8 +1,10 @@
 import { APIGatewayProxyEvent } from "aws-lambda";
 import { CustomError, formatErrorResponse } from "../../handler";
 import { RolDatasources } from "../datasource/role.datasourse";
+import { useMiddlewares } from "../../middleware/useMiddlewares";
+import { validateRol } from "../../authoraizer/middleware/rol.middleware";
 
-export const handler = async (event: APIGatewayProxyEvent) => {
+export const elimination = async (event: APIGatewayProxyEvent) => {
   const { name } = event.pathParameters!;
   if (!name) return formatErrorResponse(CustomError.badRequest("El name es requerido"));
 
@@ -24,3 +26,10 @@ export const handler = async (event: APIGatewayProxyEvent) => {
   }
  
 };
+
+export const handler = useMiddlewares({
+                        handler: elimination, 
+                        middlewares: [
+                          validateRol("admin"),
+                        ]
+                      });

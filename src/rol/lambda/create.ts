@@ -3,8 +3,9 @@ import { CustomError, formatErrorResponse } from "../../handler";
 import { RolDatasources } from "../datasource/role.datasourse";
 import { CreateRolDtos } from "../dtos/create.rol.dtos";
 import { useMiddlewares } from '../../middleware/useMiddlewares';
+import { validateRol } from "../../authoraizer/middleware/rol.middleware";
 
-export const handler = async ( event: APIGatewayProxyEvent )=> {
+export const create = async ( event: APIGatewayProxyEvent )=> {
   const { name, description } = JSON.parse(event.body!);
   const [ err, createRolDtos ] = CreateRolDtos.create({name, description});
   if (err) return formatErrorResponse(CustomError.badRequest(err)); 
@@ -27,9 +28,9 @@ export const handler = async ( event: APIGatewayProxyEvent )=> {
 
 };
 
-// export const handler = useMiddlewares({
-//                         handler: create, 
-//                         middlewares: [
-                          
-//                         ]
-//                       });
+export const handler = useMiddlewares({
+                        handler: create, 
+                        middlewares: [
+                          validateRol("admin"),
+                        ]
+                      });
