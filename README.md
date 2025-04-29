@@ -99,6 +99,13 @@ You can see more details about the endpoints at: https://documenter.getpostman.c
 
 When deployed, the service exposes several endpoints:
 
+`
+POST /dev/auth/login HTTP/1.1
+   {
+      "email": "admin@admin.com",
+      "password": "juanjose21"
+   }   
+`
 
 
 *Note: The actual endpoints may vary based on your serverless.yml configuration.*
