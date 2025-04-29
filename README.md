@@ -83,13 +83,13 @@ sls deploy
 To remove the deployed service:
 
 ```
-npm run destroy
+sls remove
 ```
 
 ## Available Scripts
 
-- `npm run dev`: Deploy the service to AWS
-- `npm run destroy`: Remove the deployed service from AWS
+- `npm run deploy:dev`: Deploy the service development environment on AWS
+- `npm run remove:dev`: Remove the dev environment from the deployed AWS service
 - `npm run layer`: Create a Lambda layer for Node.js dependencies
 
 ## Deployed Endpoints
