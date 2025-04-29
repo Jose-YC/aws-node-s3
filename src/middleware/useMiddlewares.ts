@@ -1,5 +1,5 @@
-import { APIGatewayProxyResult } from 'aws-lambda';
-import { OptionsMiddleware, OptionsReturnMiddleware } from '../types/types';
+import { APIGatewayProxyEvent, APIGatewayProxyResult, Callback, Context } from 'aws-lambda';
+import { OptionsMiddleware } from '../types/types';
 import { formatErrorResponse } from '../handler';
   
   /**
@@ -10,20 +10,24 @@ import { formatErrorResponse } from '../handler';
    */
   export const useMiddlewares = (op: OptionsMiddleware) => {
 
-    return async (options: OptionsReturnMiddleware): Promise<APIGatewayProxyResult> => {
+    return async (event: APIGatewayProxyEvent, context: Context, callback:Callback): Promise<APIGatewayProxyResult> => {
+      console.log("EVENTO DEL PATRON", event);
+        console.log("CONTEXTO DEL PATRON", context);
+        console.log("FUNCION NEXT DEL PATRON", callback);
       try {
 
         let index = 0;
         
         const executeMiddleware = async (): Promise<APIGatewayProxyResult> => {
-          if (index === op.middlewares.length) return await op.handler(options.event, options.context, options.callback);
+          if (index === op.middlewares.length) return await op.handler(event, context, callback);
           const currentMiddleware = op.middlewares[index++];
-          return await currentMiddleware(options.event, options.context, executeMiddleware);
+          return await currentMiddleware(event, context, executeMiddleware);
         };
         
         return await executeMiddleware();
 
       } catch (error) {
+        console.error('Error en el middleware:', error);
         return formatErrorResponse(error);   
       }
     };

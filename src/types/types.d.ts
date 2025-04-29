@@ -1,7 +1,7 @@
 import { 
     APIGatewayProxyEvent, 
     APIGatewayProxyResult, 
-    Context, Callback, Handler
+    Context, Handler
   } from 'aws-lambda';
 
  // Tipo para middleware
@@ -14,10 +14,4 @@ import {
   export type OptionsMiddleware = {
     handler: Handler, 
     middlewares: ReturnType<Middleware>[], 
-  };
-
-  export type OptionsReturnMiddleware = {
-    event: APIGatewayProxyEvent,
-    context: Context,
-    callback:Callback
   };

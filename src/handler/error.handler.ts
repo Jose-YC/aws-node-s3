@@ -5,6 +5,8 @@ import { CustomError } from "./errors/custom.error";
 
 export const formatErrorResponse = (err: Error): APIGatewayProxyResult => {
 
+    console.log('Error:', err);
+
     if (err instanceof CustomError) {
         return {
             statusCode: err.httpCode,

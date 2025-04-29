@@ -11,7 +11,10 @@ export const validateRol = (...roles:string[]) => {
         context: Context, 
         next: () => Promise<APIGatewayProxyResult>
     ): Promise<APIGatewayProxyResult> => {
-
+        console.log("EVENTO", event);
+        console.log("CONTEXTO", context);
+        console.log("FUNCION NEXT", next);
+        console.log("ROLES A VALIDAR", roles);
         const { rol } = event.requestContext.authorizer!;
 
         if ( !rol ) throw CustomError.unAuthorized('Token invalido');
