@@ -99,14 +99,116 @@ You can see more details about the endpoints at: https://documenter.getpostman.c
 
 When deployed, the service exposes several endpoints:
 
-`
-POST /dev/auth/login HTTP/1.1
-   {
-      "email": "admin@admin.com",
-      "password": "juanjose21"
-   }   
-`
+```
+POST /dev/auth/login 
 
+{
+   "email": string,
+   "password": string
+}   
+```
+
+```
+GET /dev/auth/renew
+```
+
+```
+POST /dev/auth/register 
+
+{
+    "name": string,
+    "email": string,
+    "password": string
+}
+```
+
+```
+POST /dev/user/create
+
+{
+    "name": string,
+    "email": string,
+    "password": string,
+    "rol": string
+}
+```
+
+```
+GET /dev/user?lim&startkey
+```
+
+```
+GET /dev/user/{id} 
+```
+
+```
+DELETE /dev/user/delete/{id}  
+```
+
+```
+GET /dev/rol?lim&startkey
+
+```
+
+```
+PUT /dev/rol/update/{name} 
+
+{
+    "description": string
+}
+```
+
+```
+GET /dev/rol/{name} 
+```
+
+```
+DELETE /dev/rol/delete/{name} 
+```
+
+```
+POST /dev/rol/create 
+
+{
+    "name": string,
+    "description": string
+
+}
+```
+
+```
+GET /dev/photo?lim&startkey
+```
+
+```
+GET /dev/photo/all?lim&startkey
+```
+
+```
+GET /dev/photo/{id} 
+```
+
+```
+GET /dev/photo/url
+```
+
+```
+POST /dev/photo/transform/{id}
+
+{
+  "transformations": {
+    "resize": {
+      "width": number,
+      "height": number
+    },
+    "rotate": number,
+    "filters": {
+      "grayscale": booleano,
+      "sepia": booleano
+    }
+  }
+}
+```
 
 *Note: The actual endpoints may vary based on your serverless.yml configuration.*
 
