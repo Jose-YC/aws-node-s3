@@ -2,8 +2,10 @@ import { APIGatewayProxyEvent } from "aws-lambda";
 import { CustomError, formatErrorResponse } from "../../handler";
 import { PhotoIdDtos } from "../dtos";
 import { PhotoDatasources } from "../datasource/photo.datasource";
+import { useMiddlewares } from "../../middleware/useMiddlewares";
+import { validateRol } from "../../authoraizer/middleware/rol.middleware";
 
-export const handler = async (event: APIGatewayProxyEvent) => {
+export const elimination = async (event: APIGatewayProxyEvent) => {
   const { photoid } = event.pathParameters!;
   const { id:userid } = event.requestContext.authorizer!;
 
@@ -26,3 +28,11 @@ export const handler = async (event: APIGatewayProxyEvent) => {
   }
   
 };
+
+
+export const handler = useMiddlewares({
+                        handler: elimination, 
+                        middlewares: [
+                          validateRol("user", "admin"),
+                        ]
+                      });

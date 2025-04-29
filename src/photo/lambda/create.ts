@@ -2,8 +2,10 @@ import { S3Event } from "aws-lambda";
 import { PhotoDatasources } from "../datasource/photo.datasource";
 import { CustomError, formatErrorResponse } from "../../handler";
 import { CreatePhotoDtos } from "../dtos/create.photo.dtos";
+import { useMiddlewares } from "../../middleware/useMiddlewares";
+import { validateRol } from "../../authoraizer/middleware/rol.middleware";
 
-export const handler = async (event: S3Event)=> {
+export const create = async (event: S3Event)=> {
   const bucket = event.Records[0].s3.bucket.name;
   const key = event.Records[0].s3.object.key.split("/");
   const imageType = key[1].split('.');
@@ -24,3 +26,10 @@ export const handler = async (event: S3Event)=> {
   }
 
 };
+
+export const handler = useMiddlewares({
+                        handler: create, 
+                        middlewares: [
+                          validateRol("user", "admin"),
+                        ]
+                      });

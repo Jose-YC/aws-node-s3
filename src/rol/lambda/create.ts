@@ -2,6 +2,7 @@ import { APIGatewayProxyEvent } from "aws-lambda";
 import { CustomError, formatErrorResponse } from "../../handler";
 import { RolDatasources } from "../datasource/role.datasourse";
 import { CreateRolDtos } from "../dtos/create.rol.dtos";
+import { useMiddlewares } from '../../middleware/useMiddlewares';
 
 export const handler = async ( event: APIGatewayProxyEvent )=> {
   const { name, description } = JSON.parse(event.body!);
@@ -25,3 +26,10 @@ export const handler = async ( event: APIGatewayProxyEvent )=> {
   }
 
 };
+
+// export const handler = useMiddlewares({
+//                         handler: create, 
+//                         middlewares: [
+                          
+//                         ]
+//                       });

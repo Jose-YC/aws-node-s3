@@ -3,8 +3,10 @@ import { APIGatewayProxyEvent } from "aws-lambda";
 import { CustomError, formatErrorResponse } from "../../handler";
 import { PhotoIdDtos } from "../dtos";
 import { PhotoDatasources } from "../datasource/photo.datasource";
+import { useMiddlewares } from "../../middleware/useMiddlewares";
+import { validateRol } from '../../authoraizer/middleware/rol.middleware';
 
-export const handler = async (event: APIGatewayProxyEvent)=> {
+export const urlPhoto = async (event: APIGatewayProxyEvent)=> {
   const { id:userid } = event.requestContext.authorizer!;
   const { contentType } = event.queryStringParameters!;
 
@@ -30,3 +32,10 @@ export const handler = async (event: APIGatewayProxyEvent)=> {
   }
 
 };
+
+export const handler = useMiddlewares({
+                        handler: urlPhoto, 
+                        middlewares: [
+                          validateRol("user", "admin"),
+                        ]
+                      });

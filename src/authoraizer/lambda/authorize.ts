@@ -1,7 +1,7 @@
 import { APIGatewayTokenAuthorizerEvent, APIGatewayAuthorizerResult  } from 'aws-lambda';
-import { jwtAdapter } from '../plugins/jwt.adapter';
-import { UserDatasources } from '../user/datasource/user.datasource';
-import { generatePolicy } from '../handler/error.handler';
+import { jwtAdapter } from '../../plugins/jwt.adapter';
+import { UserDatasources } from '../../user/datasource/user.datasource';
+import { generatePolicy } from '../../handler/error.handler';
 
 
 export const handler = async (event: APIGatewayTokenAuthorizerEvent): Promise<APIGatewayAuthorizerResult >=> {
@@ -18,7 +18,17 @@ export const handler = async (event: APIGatewayTokenAuthorizerEvent): Promise<AP
     const user = await new UserDatasources().getById(payload.id);
     if (!user) return generatePolicy('unauthorized', 'Deny',  event.methodArn);
     
-    return generatePolicy(user.id,'Allow', event.methodArn, { name: user.name, id: user.id, email: user.email, rol: user.rol });
+    return generatePolicy(
+      user.id,
+      'Allow',
+       event.methodArn, 
+       { 
+        name: user.name, 
+        id: user.id, 
+        email: user.email, 
+        rol: user.rol 
+      }
+    );
 
   } catch (error) {
     console.log(error);

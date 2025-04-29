@@ -5,8 +5,10 @@ import { PhotoDatasources } from '../datasource/photo.datasource';
 import { formatErrorResponse, CustomError } from '../../handler';
 import { PhotoDtos } from '../dtos';
 import { PutObjectCommand, s3Client } from '../../data/Dynamodb/dynamodb';
+import { useMiddlewares } from '../../middleware/useMiddlewares';
+import { validateRol } from '../../authoraizer/middleware/rol.middleware';
 
-export const handler = async (event: APIGatewayProxyEvent) => {
+export const transformations = async (event: APIGatewayProxyEvent) => {
   const body = JSON.parse(event.body!);
   const { photoid } = event.pathParameters!;
   const { id:userid } = event.requestContext.authorizer!;
@@ -42,3 +44,10 @@ export const handler = async (event: APIGatewayProxyEvent) => {
   }
   
 };
+
+export const handler = useMiddlewares({
+                        handler: transformations, 
+                        middlewares: [
+                          validateRol("user", "admin"),
+                        ]
+                      });
